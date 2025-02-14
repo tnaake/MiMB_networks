@@ -1,0 +1,113 @@
+---
+title: "Multi-omics guided pathway and network analysis of metabolomics and proteomics data"
+author:
+  - name: "Christina Schmidt"
+    affiliation:
+      - Bioquant, Heidelberg
+  - name: "Thomas Naake"
+    affiliation:
+      - name: European Molecular Biology Laboratory, Meyerhofstrasse 1, 69117 Heidelberg, Germany
+      - name: European Molecular Biology Laboratory, Notkestrasse 85, 22607 Hamburg, Germany
+format: docx
+---
+
+Metabolomics, the study of small molecules in biological systems, and proteomics,
+the study of proteins in biological systems, has
+become a powerful tool for understanding biochemical pathways,
+discovering biomarkers, and elucidating disease mechanisms. This chapter
+provides a  guide to performing metabolomics and proteomics data analysis
+in R using pathway and network approaches. It covers essential steps, including data
+preprocessing, quality control (QC), differential expression analysis,
+multi-omics factor analysis (MOFA), correlation analysis, and pathway analysis.
+
+```{r}
+#| message: false
+library("cowplot")
+library("dplyr")
+library("ggplot2")
+library("ggplotify")
+library("igraph")
+library("MatrixQCvis")
+library("MatrixQCvisUtils")
+library("MOFA2")
+library("SummarizedExperiment")
+library("vsn")
+```
+
+# Introduction to metabolomics pathway and network analysis
+
+organize measurements, relationships between features
+
+Networks provide an intuitive and powerful framework to study
+metabolomics data by representing metabolites as nodes and their
+relationships (e.g., correlations, shared pathways) as edges. This
+approach enables insights into system-level changes and interactions
+between metabolites and other omics layers. In this chapter, we will
+leverage R's extensive ecosystem for metabolomics analysis, including
+packages like `igraph`, and `MOFA`.
+
+Previous work: metaRbolomics Two major types of graphs: knowledge and
+experimental "Knowledge networks are derived from at-hand biochemical or
+biological information, enabling the interpretation of metabolomics data
+using existing biological knowledge, e.g. metabolic pathways with data
+on enzymatic reactions. A metabolic network represents for instance a
+type of knowledge network, where metabolites and their established
+biochemical conversions are depicted as nodes and edges, respectively.
+In contrast, experimental networks are constructed directly from
+acquired experimental metabolomics data, based on relationships among
+potential or identified metabolites, such as spectral similarity or
+correlation. Importantly, both knowledge networks and experimental
+networks can be analysed with advanced statistical methods, graph
+analyses, and data analysis techniques to explore relationships within
+the dataset. "
+
+In this chapter, we will use the dataset from [@Gegner2024] to showcase
+functionality in the statistical programming language `R` to analyse
+metabolomics using network and pathway analysis tools. We present here a
+complete pipeline starting with data import, data preprocessing The data
+sets are proteomics and metabolomics measurement from fresh-frozen tumor
+and non-tumorous (adjacent) tissue of patients with lung adenocarcinoma.
+Metabolomics was acquired using the MxP(r) Quant 500 kit (Biocrates)
+using LC-MS/MS and FIA-MS/MS measurements run on a UPLC I-class PLUS
+(Waters) system coupled to a SCIEX QTRAP 6500 + mass spectrometry system
+in electrospray ionisation (ESI) mode. Proteomics was aquired using an
+Easy nLC 1200 system (Thermo) coupled to a timsTOF Pro mass spectrometer
+(Bruker Daltonics). For further details on the analytical methods refer
+to @Gegner2024.
+
+For space restrictions, some of the data wrangling steps and downstream
+analyses will not be displayed in this chapter and we refer the 
+interested reader to check the complete protocol available via
+www.github.com/tnaake/MiMB_networks/R/chapter_network_multiomics.qmd.
+
+
+# Data preprocessing and quality assessment and quality control (QA/QC)
+
+Preprocessing and quality assessment and quality control (QA/QC) are
+critical to ensure the integrity of metabolomics data. Steps typically
+include control for outliers, data normalization, missing value
+imputation (optional), and removal of batch effects. Each step requires
+careful parameter selection based on the dataset and experimental
+conditions. For a multi-omics analysis using MOFA as presented here, it is 
+paramount to ensure that the modalities have the same number of samples with
+identical sample names.
+
+## Loading Data, data wrangling
+
+1.  Load the proteomics and metabolomics data sets via import
+    functions from `MatrixQCvisUtils` (available via
+    www.github.com/tnaake/MatrixQCvisUtils). 
+    Importing the XLSX sheets into R via the
+    `MatrixQCvisUtils` package, creates `SummarizedExperiment` (@Morgan2024)
+    objects, popular data formats within the R/Bioconductor framework.
+
+```{r}
+## load metabolomics data
+metabolomics <- biocrates("../data/12014_2024_9501_MOESM4_ESM.xlsx", 
+    sheet = 1, colNames = FALSE)
+
+## load proteomics data
+proteomics <- maxquant(file = "../data/12014_2024_9501_MOESM3_ESM.xlsx",
+    intensity = "LFQ", sheet = "ProteinGroups_Lung cancer cohor", type = "xlsx")
+```
+
