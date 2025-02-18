@@ -15,7 +15,7 @@ format: docx
 
 Metabolomics, the study of small molecules in biological systems, and proteomics, the study of proteins in biological systems, have become powerful tools for understanding biochemical pathways, discovering biomarkers, and elucidating disease mechanisms. This chapter provides a guide to performing metabolomics and proteomics data analysis in R using pathway and network approaches. It covers essential steps, including data preprocessing, quality control (QC), differential expression analysis, multi-omics factor analysis (MOFA), correlation analysis, and pathway analysis.
 
-keywords: metabolomics, proteomics, processing, QC, network analysis, pathway, knowledge graphs
+keywords: Metabolomics, Proteomics, Processing, Quality control, Network analysis, Pathway, Knowledge graphs
 
 ```{r}
 #| message: false
