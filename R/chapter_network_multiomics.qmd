@@ -1,5 +1,5 @@
 ---
-title: "Multi-omics guided pathway and network analysis of metabolomics and proteomics data"
+title: "Multi-omics guided pathway and network analysis of clinical metabolomics and proteomics data"
 author:
   - name: "Christina Schmidt"
     affiliation:
@@ -11,95 +11,97 @@ author:
 format: docx
 ---
 
-Metabolomics, the study of small molecules in biological systems, and proteomics,
-the study of proteins in biological systems, has
-become a powerful tool for understanding biochemical pathways,
-discovering biomarkers, and elucidating disease mechanisms. This chapter
-provides a  guide to performing metabolomics and proteomics data analysis
-in R using pathway and network approaches. It covers essential steps, including data
-preprocessing, quality control (QC), differential expression analysis,
-multi-omics factor analysis (MOFA), correlation analysis, and pathway analysis.
+Metabolomics, the study of small molecules in biological systems, and proteomics, the study of proteins in biological systems, have become powerful tools for understanding biochemical pathways, discovering biomarkers, and elucidating disease mechanisms. This chapter provides a guide to performing metabolomics and proteomics data analysis in R using pathway and network approaches. It covers essential steps, including data preprocessing, quality control (QC), differential expression analysis, multi-omics factor analysis (MOFA), correlation analysis, and pathway analysis.
 
 ```{r}
 #| message: false
+#| echo: false
+
+## install and load packages used for analysis
+## BiocManager
+if (!require("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+    BiocManager::install(version = "3.20")
+}
+
+## cowplot
+if (!require("cowplot", quietly = TRUE))
+    BiocManager::install("cowplot")
 library("cowplot")
+
+## dplyr
+if (!require("dplyr", quietly = TRUE))
+    BiocManager::install("dplyr")
 library("dplyr")
+
+## ggplot2
+if (!require("ggplot2", quietly = TRUE))
+    BiocManager::install("ggplot2")
 library("ggplot2")
+
+## ggplotify
+if (!require("ggplotify", quietly = TRUE))
+    BiocManager::install("ggplotify")
 library("ggplotify")
+
+## igraph
+if (!require("igraph", quietly = TRUE))
+    BiocManager::install("igraph")
 library("igraph")
+
+## MatrixQCvis
+if (!require("MatrixQCvis", quietly = TRUE))
+    BiocManager::install("MatrixQCvis")
 library("MatrixQCvis")
+
+## MatrixQCvisUtils
+if (!require("MatrixQCvisUtils", quietly = TRUE))
+    BiocManager::install("MatrixQCvisUtils")
 library("MatrixQCvisUtils")
+
+## MetNet
+if (!require("MetNet", quietly = TRUE))
+    BiocManager::install("MetNet")
+library("MetNet")
+
+## MOFA2
+if (!require("MOFA2", quietly = TRUE))
+    BiocManager::install("MOFA2")
 library("MOFA2")
+
+## org.Hs.eg.db
+if (!require("org.Hs.eg.db", quietly = TRUE))
+    BiocManager::install("org.Hs.eg.db")
+library("org.Hs.eg.db")
+
+## SummarizedExperiment
+if (!require("SummarizedExperiment", quietly = TRUE))
+    BiocManager::install("SummarizedExperiment")
 library("SummarizedExperiment")
+
+## vsn
+if (!require("vsn", quietly = TRUE))
+    BiocManager::install("vsn")
 library("vsn")
 ```
 
-# Introduction to metabolomics pathway and network analysis
+# Introduction to metabolomics and proteomics pathway and network analysis
 
-organize measurements, relationships between features
+Networks provide an intuitive and powerful framework to study metabolomics and proteomics data by representing metabolites and protein as nodes and their relationships (e.g., correlations, shared pathways) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase R's extensive ecosystem for metabolomics and proteomics analysis, including packages like `igraph`, `MOFA`, and `decoupler`.
 
-Networks provide an intuitive and powerful framework to study
-metabolomics data by representing metabolites as nodes and their
-relationships (e.g., correlations, shared pathways) as edges. This
-approach enables insights into system-level changes and interactions
-between metabolites and other omics layers. In this chapter, we will
-leverage R's extensive ecosystem for metabolomics analysis, including
-packages like `igraph`, and `MOFA`.
+For this chapter, we will define knowledge networks and experimental networks. Knowledge networks are constructed using existing biochemical and biological information, helping to interpret metabolomics and proteomics data within the framework of known pathways. For instance, a metabolic network represents a knowledge network, where metabolites act as nodes and their biochemical conversions form the edges. In contrast, experimental networks are directly derived from metabolomics and proteomics data, linking metabolites and proteins based on observed relationships like correlation or, in case of MS/MS data, spectral similarity. Both types of networks can be explored using advanced statistical methods, graph analysis, and data-driven techniques to reveal meaningful patterns and connections within the dataset.
 
-Previous work: metaRbolomics Two major types of graphs: knowledge and
-experimental "Knowledge networks are derived from at-hand biochemical or
-biological information, enabling the interpretation of metabolomics data
-using existing biological knowledge, e.g. metabolic pathways with data
-on enzymatic reactions. A metabolic network represents for instance a
-type of knowledge network, where metabolites and their established
-biochemical conversions are depicted as nodes and edges, respectively.
-In contrast, experimental networks are constructed directly from
-acquired experimental metabolomics data, based on relationships among
-potential or identified metabolites, such as spectral similarity or
-correlation. Importantly, both knowledge networks and experimental
-networks can be analysed with advanced statistical methods, graph
-analyses, and data analysis techniques to explore relationships within
-the dataset. "
+In this chapter, we will use the dataset from [@Gegner2024] to showcase functionality in the statistical programming language `R` to analyse metabolomics and proteomics using network and pathway analysis tools. We present here an end-to-end pipeline starting with data import, data preprocessing, multi-omics integration and downstream analysis to interpret the latent factors of the model. The data sets are proteomics and metabolomics measurement from fresh-frozen tumor and non-tumorous (adjacent) tissue of patients with lung adenocarcinoma. Metabolomics was acquired using the MxP(r) Quant 500 kit (Biocrates) using LC-MS/MS and FIA-MS/MS measurements run on a UPLC I-class PLUS (Waters) system coupled to a SCIEX QTRAP 6500 + mass spectrometry system in electrospray ionisation (ESI) mode. Proteomics was aquired using an Easy nLC 1200 system (Thermo) coupled to a timsTOF Pro mass spectrometer (Bruker Daltonics). For further details on the analytical methods refer to @Gegner2024.
 
-In this chapter, we will use the dataset from [@Gegner2024] to showcase
-functionality in the statistical programming language `R` to analyse
-metabolomics using network and pathway analysis tools. We present here a
-complete pipeline starting with data import, data preprocessing The data
-sets are proteomics and metabolomics measurement from fresh-frozen tumor
-and non-tumorous (adjacent) tissue of patients with lung adenocarcinoma.
-Metabolomics was acquired using the MxP(r) Quant 500 kit (Biocrates)
-using LC-MS/MS and FIA-MS/MS measurements run on a UPLC I-class PLUS
-(Waters) system coupled to a SCIEX QTRAP 6500 + mass spectrometry system
-in electrospray ionisation (ESI) mode. Proteomics was aquired using an
-Easy nLC 1200 system (Thermo) coupled to a timsTOF Pro mass spectrometer
-(Bruker Daltonics). For further details on the analytical methods refer
-to @Gegner2024.
-
-For space restrictions, some of the data wrangling steps and downstream
-analyses will not be displayed in this chapter and we refer the 
-interested reader to check the complete protocol available via
-www.github.com/tnaake/MiMB_networks/R/chapter_network_multiomics.qmd.
-
+For space restrictions, some of the data wrangling steps and downstream analyses will not be displayed in this chapter and we refer the interested reader to check the complete and reproducible protocol available via www.github.com/tnaake/MiMB_networks/R/chapter_network_multiomics.qmd.
 
 # Data preprocessing and quality assessment and quality control (QA/QC)
 
-Preprocessing and quality assessment and quality control (QA/QC) are
-critical to ensure the integrity of metabolomics data. Steps typically
-include control for outliers, data normalization, missing value
-imputation (optional), and removal of batch effects. Each step requires
-careful parameter selection based on the dataset and experimental
-conditions. For a multi-omics analysis using MOFA as presented here, it is 
-paramount to ensure that the modalities have the same number of samples with
-identical sample names.
+Preprocessing and quality assessment and quality control (QA/QC) are critical to ensure the integrity of metabolomics data. Steps typically include control for outliers, data normalization, missing value imputation (optional), and removal of batch effects. Each step requires careful parameter selection based on the dataset and experimental conditions. For a multi-omics analysis using MOFA as presented here, it is paramount to ensure that the modalities have the same number of samples with identical sample names.
 
-## Loading Data, data wrangling
+## Load the data sets, data wrangling
 
-1.  Load the proteomics and metabolomics data sets via import
-    functions from `MatrixQCvisUtils` (available via
-    www.github.com/tnaake/MatrixQCvisUtils). 
-    Importing the XLSX sheets into R via the
-    `MatrixQCvisUtils` package, creates `SummarizedExperiment` (@Morgan2024)
-    objects, popular data formats within the R/Bioconductor framework.
+1.  Load the proteomics and metabolomics data sets via import functions from `MatrixQCvisUtils` (available via www.github.com/tnaake/MatrixQCvisUtils). Importing the XLSX sheets into R via the `MatrixQCvisUtils` package, creates `SummarizedExperiment` (@Morgan2024) objects, popular data formats within the R/Bioconductor framework. The `SummarizedExperiment` class stores the measured data (available via `assay`), next to the metadata associated to the samples (available via `colData`) and features (available via `rowData`).
 
 ```{r}
 ## load metabolomics data
@@ -111,3 +113,744 @@ proteomics <- maxquant(file = "../data/12014_2024_9501_MOESM3_ESM.xlsx",
     intensity = "LFQ", sheet = "ProteinGroups_Lung cancer cohor", type = "xlsx")
 ```
 
+2.  After importing the data set check the following properties of the data set:
+    -   correct representation of missing values (`NA`) in data set,
+    -   correct data dimension and structure,
+    -   identical number of samples and identical sample names between data sets,
+    -   verify that the samples of the modalities are in the same order,
+    -   correct formatting of feature names, complete number of features for each data set,
+    -   complete and correctly formatted metadata associated to each data set
+3.  (optional) Depending on 2., identify the nature of missing features, harmonize sample names, correct feature names, harmonize metadata and check for completeness.
+
+```{r}
+#| echo: false
+#| results: false
+## Loading the data from the supplemental material from @Gegner2024, the
+## sample names are not correctly imported to the `R` session. In this
+## step, the sample names are harmonized between the `metabolomics` and the
+## `proteomics` data set. In addition, when checking for the data
+## dimension, we observe that the `proteomics` data set contains
+## information from two different extraction methods (number of samples of
+## `proteomics`: `r ncol(proteomics)`, number of samples of
+## `metabolomics`). We also make sure, that the metadata is harmonized
+## between the two objects and that the information on the tissue type is
+## properly reflected in the metadata. Metadata from Table 1 in @Gegner2024
+## is added both to `metabolomics` and `proteomics`.
+
+## data dimension and structure
+dim(metabolomics)
+dim(proteomics)
+
+## sample names between data sets
+##
+## metabolomics
+## add information on tissue type in column tissue
+metabolomics$tissue <- ifelse(metabolomics$Tissue.type == "Tumor tissue", 
+    "TU", "NAT")
+
+## harmonize sample names
+metabolomics$name <- paste(metabolomics$tissue, 
+    rep(1:10, each = 2), sep = "_")
+colnames(metabolomics) <- metabolomics$name
+
+## make sure that colData only contains columns name and tissue
+colData(metabolomics) <- colData(metabolomics)[, c("name", "tissue")]
+
+## add information on patient_ID
+metabolomics$patient_ID <- stringr::str_remove(metabolomics$name, 
+    pattern = "NAT_|TU_") |>
+    as.numeric()
+
+##
+## proteomics
+## add information on tissue type in column tissue
+proteomics$tissue <- ifelse(grepl(proteomics$name, pattern = "_TU_"), 
+    "TU", "NAT")
+
+## make sure that proteomics only contains samples from one extraction method
+proteomics <- proteomics[, grep(colnames(proteomics), pattern = "ProtMet")]
+
+## harmonize sample names
+proteomics$name <- colnames(proteomics) |>
+    stringr::str_remove(pattern = "LFQ.intensity.._KL_") |>
+    stringr::str_remove(pattern = "ProtMet_IO_40min_DDA_") |>
+    strsplit(split = "_") |>
+    lapply(FUN = function(i) i[1]) |>
+    unlist() |>
+    stringr::str_remove(pattern = "l$")
+df_names <- data.frame(
+    rbind(
+        c("1", "8JDLQY"),
+        c("2", "K6R512"),
+        c("3", "ZQ021J"),
+        c("4", "KWF2HW"),
+        c("5", "1FF2F9"),
+        c("6", "IJ17TV"),
+        c("7", "8U04FR"),
+        c("8", "ZT9UTK"),
+        c("9", "C5FQXS"),
+        c("10", "36AT2O")
+    ))
+colnames(df_names) <- c("names_table", "names_proteomics")
+proteomics$name <- paste(proteomics$tissue, 
+    df_names[match(proteomics$name, df_names[["names_proteomics"]]), "names_table"],
+    sep = "_")
+colnames(proteomics) <- proteomics$name
+
+## make sure that colData only contains columns name and tissue
+colData(proteomics) <- colData(proteomics)[, c("name", "tissue")]
+
+## add information on patient_ID
+proteomics$patient_ID <- stringr::str_remove(proteomics$name, 
+    pattern = "NAT_|TU_") |>
+    as.numeric()
+
+## make sure that metabolomics and proteomics have the same colnames
+if (!all(colnames(metabolomics) %in% colnames(proteomics)))
+    stop("Not all colnames(metabolomics) are found in colnames(proteomics)).")
+if (!all(colnames(proteomics) %in% colnames(metabolomics)))
+    stop("Not all colnames(proteomics) are found in colnames(metabolomics)).")
+
+## order the colnames according to metabolomics
+proteomics <- proteomics[, colnames(metabolomics)]
+```
+
+4.  (optional) Identify additional metadata, for example clinical parameters or translated IDs for metabolites (e.g. HMDB, KEGG, ChEBI ids) and proteins (e.g. Entrez, SYMBOL, Uniprot ids), from other sources. Add the metadata to the respective slots of the `SummarizedExperiment` object (`rowData` for features, `colData` for samples).
+
+```{r}
+#| message: false
+#| echo: false
+## For this data set, additional metadata on clinical parameters are
+## missing. We add information from Table 1 from @Gegner2024 to the
+## `SummarizedExperiment` objects. For brievity, the steps can be followed
+## in the corresponding GitHub repository of this chapter.
+
+## metadata on patients (Table 1, from Gegner et al., 2024)
+metadata <- data.frame(
+    rbind(
+        c("1", "61", "m", "ADC", "IB",  "0", "Ex- smoker",     "35", "yes"),
+        c("2", "80", "f", "ADC", "IIB", "0", "Never- smoker",  "0",  "yes"),
+        c("3", "62", "m", "ADC", "IB",  "1", "Ex- smoker",     "40", "yes"),
+        c("4", "83", "f", "ADC", "IIB", "0", "Never- smoker",  "0",  "yes"),
+        c("5", "56", "f", "ADC", "IIA", "0", "Current smoker", "30", "yes"),
+        c("6", "77", "m", "ADC", "IIB", "0", "Ex- smoker",     "10", "no"), 
+        c("7", "80", "m", "ADC", "IIB", "0", "Ex- smoker",     "2",  "no"),
+        c("8", "72", "f", "ADC", "IIB", "0", "Current smoker", "50", "no"),
+        c("9", "60", "m", "ADC", "IB",  "1", "Current smoker", "40", "no"),
+        c("10", "57", "m", "ADC", "IB",  "0", "Ex- smoker",     "30", "no")
+))
+colnames(metadata) <- c("patient_ID", "age_at_diagnosis", "sex", "histology",
+    "pstage", "ECOG", "smoking_status", "pack_years", "recurrence")
+metadata$patient_ID <- as.numeric(metadata$patient_ID)
+metadata$age_at_diagnosis <- as.numeric(metadata$age_at_diagnosis)
+metadata$sex <- as.factor(metadata$sex)
+metadata$histology <- as.factor(metadata$histology)
+metadata$pstage <- as.factor(metadata$pstage)
+metadata$ECOG <- as.factor(metadata$ECOG)
+metadata$smoking_status <- as.factor(metadata$smoking_status)
+metadata$pack_years <- as.numeric(metadata$pack_years)
+metadata$recurrence <- as.factor(metadata$recurrence)
+
+## link metadata to colData of metabolomics and proteomics
+colData(metabolomics) <- colData(metabolomics) |>
+    as.data.frame() |>
+    dplyr::left_join(y = metadata, by = "patient_ID") |>
+    DataFrame(row.names = colData(metabolomics)$name)
+colData(metabolomics) <- colData(proteomics) |>
+    as.data.frame() |>
+    dplyr::left_join(y = metadata, by = "patient_ID") |>
+    DataFrame(row.names = colData(proteomics)$name)
+
+## add Symbol names to rowData of proteomics
+uniprots <- Rkeys(org.Hs.egUNIPROT)
+dict <- AnnotationDbi::select(org.Hs.eg.db, uniprots, "SYMBOL", "UNIPROT")
+uniprot <- dict$UNIPROT
+symbol <- dict$SYMBOL
+names(symbol) <- uniprot
+rowData(proteomics)$SYMBOL <- unlist(lapply(rowData(proteomics)$feature, 
+    function(x) paste(symbol[strsplit(x, split = ";")[[1]]], collapse = ";")))
+```
+
+## Removal of features in the data sets
+
+Each data set comes typically with information on the reliability of features. The information can be used to remove non-reliable features. After this step, the quality of the data sets are improved. Filtering and removal of the features should be tailored to the study design and the knowledge of the data set. Stricter filtering reduces false positives but may remove true low-abundance features.
+
+1.  Remove low or high abundance features. Low intensity features may be due to noise or below the limit of detection or quantification. High intensity may be above the limit of quantification, the linear dynamic range, or the calibration range. Removing these features prevents artifacts in downstream statistical analyses. For the targeted metabolomics data set, ensure that the data set only includes high-quality metabolite measurements. The MetIDQ output provides assessment of the quality of each measurement, encoded by a color code of each cell (dark blue: \< LOD (Limit of Detection; 3x signal to noise); light blue: \< LLOQ (Lower Limit of Quantification; 10x signal to noise) or \> ULOQ (Upper Limit of Quantification); green: valid; Yellow: Internal Standard out of range). Remove the low-quality features that do not meet the defined quantification criteria (`choice of user`). In this case, we will retain only those metabolites where at least 50% of the measurements fall within the quantification limits (valid). This filtering step ensures that the data set primarily consists of reliable data points minimizing the impact of imprecise measurements.
+
+```{r}
+source("utils.R")
+valid_features <- metIDQ_get_high_quality_features(
+    file = "../data/12014_2024_9501_MOESM4_ESM.xlsx", threshold = 0.5)
+metabolomics <- metabolomics[valid_features, ]
+```
+
+2.  (optional) Remove those features that are only detected in a subset of samples (`choice of user`). High levels of missing data (`NA` values can reduce statistical power, and while imputation techniques can be applied, imputation of excessive number of missing values per feature lead to unreliable results. Additionally, features identified in only a few biological replicates may lack reproducibility, impacting downstream analyses. Filtering criteria can be set on a global level, such as removing features absent in more than 50% of the samples, or based on metadata of the data set, such as removing features detected in fewer than two biological replicates per condition. More stringent thresholds, such as requiring detection in at least 50% of replicates within each condition, can further improve dataset reliability. The choice of filtering thresholds should be guided by domain-specific knowledge and dataset's characteristics. Overly strict filtering may remove biologically relevant proteins that are present only in specific subsets of samples, such as particular cell lines or patient groups. Filtering strategies should be carefully considered to maintain a balance between data quality and the the retention of meaningful biological information.
+
+```{r}
+## we will remove the features that are detected in less than ten samples 
+valid_features <- apply(assay(proteomics), MARGIN = 1, FUN = function(rows_i) !(sum(!is.na(rows_i)) < 10))
+proteomics <- proteomics[valid_features, ]
+```
+
+3.  Remove the features with high coefficient of variation (CV, `choice of user`). High variability in technical replicates or QC pools suggests inaccurate quantification. For example, features with CV \> 30-50% across technical replicates may be removed.
+
+4.  Remove features with a standard deviation of 0 as these features do not contain information for biological interpretation.
+
+```{r}
+## metabolomics
+valid_features <- apply(assay(metabolomics), MARGIN = 1, sd, na.rm = TRUE) > 0
+metabolomics <- metabolomics[valid_features, ]
+
+## proteomics
+valid_features <- apply(assay(proteomics), MARGIN = 1, sd, na.rm = TRUE) > 0
+proteomics <- proteomics[valid_features, ]
+```
+
+5.  For proteomics data, ensure that the data set only includes high-quality protein measurements. In the proteomics dataset generated by MaxQuant [@cite here], peptide counts serve as an indicator of the reliability of protein identification. To ensure data quality, we will filter out proteins identified with low confidence (`choice of user`. In this case, we will remove any protein that has fewer than two peptides supporting its identification. This approach helps retain only well-supported protein identifications, enhancing the robustness of downstream analyses.
+
+```{r}
+valid_features <- lapply(
+    strsplit(rowData(proteomics)$peptide_counts_all, split = ";"), 
+    function(i) max(as.numeric(i)) >= 2) |> 
+    unlist()
+valid_features[is.na(valid_features)] <- FALSE
+proteomics <- proteomics[valid_features, ]
+```
+
+6.  For proteomics data, remove common contaminants by using a contaminant database (e.g., MaxQuant's contaminant list). Contaminants like keratins (from human skin), trypsin (from digestion), or bovine serum albumin (BSA) can interfere with interpretation of results.
+
+7.  For the proteomics data set, remove the features with reverse sequences as they do not correspond to real biological proteins. Reverse sequences refer to decoy sequences generated by reversing the amino acid sequence of real proteins. Reverse sequences are commonly used as negative controls in target-decoy strategies for false discovery rate estimation in mass-spectrometry-based proteomics.
+
+```{r}
+valid_features <- rowData(proteomics)$reverse != "+" 
+valid_features[is.na(valid_features)] <- TRUE
+proteomics <- proteomics[valid_features, ]
+```
+
+## Quality assessment and quality control (QA/QC)
+
+The next step in the preprocessing pipeline is to assess the quality of the data, including both the measurements and the metadata values, and to control for it.
+
+The `MatrixQCvis` package [@Naake2022] performs QA/QC on `SummarizedExperiment` objects and offers users to perform these steps in an interactive `shiny` application.
+
+1.  Start the application via `shinyQC(metabolomics)` and `shinyQC(proteomics)`.
+2.  Check the number of measured and missing values per sample and per feature. The metric informs about the dynamic range of the acquisition. Differences between samples of an experiment may indicate differences in the dynamic range and/or in the sample content.
+3.  Check the distribution of measurements per sample. The metric informs about the dynamic range of the acquisition. Differences between samples of an experiment may indicate differences in the dynamic range and/or in the sample content.
+4.  Examine the Mean-sd plot. The metric informs about the level of homoskedasticity of the data set. Homoscedasticity is an assumption of parametric tests, e.g. t-tests. In case of sd-mean independence, the running median should be approximately horizontal.
+5.  Examine the MA plots and Hoeffding's D statistic plot. The metric informs about systematic biases and variability in the data by taking into account the log2-fold change between two conditions (M = log2(I_i) - log2(I_j)) and the mean expression of two conditions (A = 1/2 (log2(I_i) + log2(I_j))), where I_i can be the intensity from one sample i and I_j the averaged intensities from a set of samples excluding sample i. Hoeffding's D is a measure of the distance between `F(A, M)` and `G(A)H(M)`, where `F(A, M)` is the joint cumulative distribution function (CDF) of A and M, and G and H are marginal CDFs. The higher the value of D, the more dependent are A and M.
+6.  Examine the empirical cumulative distribution function (ECDF) plots. The metric informs about the distribution, skewness of a sample and helps to identify outliers.
+7.  Examine the distance matrix between samples. The metric informs how similar or different samples are from one another based on the measured values. It informs about relationships and consistency between samples of the same group (e.g. treatment vs. control). The metric also helps to detect outliers in a data set and to identify batch effects.
+8.  Examine dimension reduction, e.g. principal component analysis (PCA) and loadings plot. PCA preserves the variance between data points and aids in exploring relationships between samples and features. PCA is helpful in identifying structure in the data set and in detecting outliers.
+9.  Remove any samples or features that are outliers. Repeat the steps 1.-8.
+10. Identify the suitable normalization, batch correction, transformation, and imputation methods for the data sets by checking the metrics 3.-9.
+
+The Figure \ref{fig:qc} shows some visualisations of `shinyQC` applied on the proteomics data set.
+
+```{r, fig.show="hide"}
+#| message: false
+#| echo: false
+## A: meanSdPlot of raw values
+gg_meanSd <- meanSdPlot(assay(proteomics), ranks = TRUE)$gg +
+    theme(legend.position = "none")
+
+## B: meanSdPlot of transformed values
+gg_meanSd_log <- meanSdPlot(log(assay(proteomics)), ranks = TRUE)$gg + 
+    theme(legend.position = "none")
+
+## C: PCA of imputed raw values
+pca <- assay(proteomics) |>
+    imputeAssay(method = "MinDet") |>
+    dimensionReduction(type = "PCA", 
+        params = list(center = TRUE, scale = TRUE))
+gg_pca <- dimensionReductionPlot(tbl = pca[[1]], se = proteomics, 
+    color = "tissue", x_coord = "PC1", y_coord = "PC2", interactive = FALSE) +
+    guides(color = guide_legend(title = "tissue"))
+
+## D: PCA of imputed raw values
+pca <- assay(proteomics) |>
+    transformAssay(method = "log") |>
+    imputeAssay(method = "MinDet") |>
+    dimensionReduction(type = "PCA", 
+        params = list(center = TRUE, scale = TRUE))
+gg_pca_log <- dimensionReductionPlot(tbl = pca[[1]], se = proteomics, 
+    color = "tissue", x_coord = "PC1", y_coord = "PC2", interactive = FALSE) +
+    guides(color = guide_legend(title = "tissue"))
+
+## E: distance matrix of raw values
+d <- assay(proteomics) |>
+    distShiny()
+gg_dist <- distSample(d, proteomics, label = "tissue", 
+    show_row_names = FALSE, title = "") |>
+    as.ggplot()
+
+## F: distance matrix of transformed values
+d <- assay(proteomics) |>
+    transformAssay(method = "log") |>
+    distShiny()
+gg_dist_log <- distSample(d, proteomics, label = "tissue", 
+    show_row_names = FALSE, title = "") |>
+    as.ggplot()
+```
+
+```{r}
+plot_grid(gg_meanSd, gg_meanSd_log, gg_pca, gg_pca_log, gg_dist, gg_dist_log,
+    
+    ncol = 2, labels = "AUTO")
+```
+
+## Normalization, batch correction, transformation, missing value imputation
+
+Tools, such as MatrixQCvis (@Naake2022) can be ideally used to explore data quality interactively and optimize choice of batch correction, normalization, or transformation methods. The `MatrixQCvis` package offers utility functions to perform normalization, batch reduction, transformation and imputation using a variety of methods (`normalizeAssay`, `batchCorrectionAssay`, `transformAssay`, `imputeAssay`).
+
+1.  (optional) Normalize the data set. Normalization adjusts for technical variability and ensures comparability of metabolite and protein levels across samples. The choice of method depends on the dataset’s variability and experimental design. Common methods are median normalization, quantile division normalization (division by a given quantile per sample, e.g. 50% for median division), sum normalisation (division by )
+2.  (optional) Correct for batches. Batch effect correction is typically essential in multi-batch experiments acquired over a longer time, but may be not needed in smaller scale experiments. `ComBat`, for instance, requires specifying batch labels and optionally including covariates to retain biological variability. In case of linear efects of batches the batch effect can be removed via `limma`'s `removeBatchEffect` function and specifying the batch labels.
+3.  Transform the data set. For example, log transformation is commonly used to reduce skewness and heteroskedascity, other methods, such as log2, log10, vsn can be applied as well. The Mean-Sd plot may be used to assess the effect of transformation on homoskedasticity.
+4.  (optional) Scale the features. Scaling standardizes the magnitude of metabolite intensities.
+5.  (optional) Impute the missing values of the data sets. Metabolomics and proteomics data acquired by mass spectrometry typically contain missing values. The choice of the imputation method depends on the mechanism of missingness (e.g., missing completely at random, missing at random, missing not at random). Various imputation techniques are available in `MatrixQCvis`, such as k-nearest neighbors imputation or imputation by minimum values. For a more in-depth discussion on imputation methods in metabolomics, refer to https://www.nature.com/articles/s41598-017-19120-0, and for proteomics, see https://pubmed.ncbi.nlm.nih.gov/26906401/. Generally, missing values should be imputed with caution, as doing so requires assuming a model of missingness and will introduce fabricated data. In many cases, downstream analyses can tolerate a certain level of missingness without significant impact on results. Tools such as limma and MOFA are designed to handle datasets with incomplete observations, making imputation unnecessary for many applications.
+
+```{r}
+#| eval: true
+#| message: false
+#| warning: false
+#| results: false
+## In the case of the lung cancer adenocarcinoma data set,
+## we will apply quantile normalization and log transformation to control
+## for heteroskedascity
+
+## metabolomics
+assay(metabolomics) <- assay(metabolomics) |>
+    normalizeAssay(method = "quantile division", probs = 0.5) |>
+    transformAssay(method = "log")
+
+## proteomics
+assay(proteomics) <- assay(proteomics) |>
+    normalizeAssay(method = "quantile", probs = 0.5) |>
+    transformAssay(method = "log")
+```
+
+# Multi-omics integration using MOFA
+
+MOFA (Multi-Omics Factor Analysis, @Argelaguet2019) integrates omics modalities using a factor analysis to uncover latent factors that explain the shared variation across different datasets. Proper data wrangling and preprocessing as discussed in previous sections (e.g., normalization, transformation) are critical steps in ensuring the reliability and interpretability of the results.
+
+## Model building
+
+1.  Define the modalities (omics data types) to be included in the model. Make sure that the modalities are properly normalized and transformed. (optional) Define group information. Groups refer to the different subsets or categories within the data that can be used to model variation across multiple omics layers.
+
+```{r}
+#| eval: true
+#| message: false
+#| warning: false
+#| results: false
+# prepare data for MOFA
+MOFAobject <- create_mofa(
+    list(
+        metabolomics = assay(metabolomics),
+        proteomics = assay(proteomics)
+))
+```
+
+2.  Define the parameters for training of the MOFA model (`choice of user`). Parameters control how data is preprocessed before training, such as whether views or groups are scaled to the same variance or centered (with a mean of zero). Parameters can define the structure of the MOFA model, such as the number of latent factors to infer, which can be guided by prior biological knowledge or model selection techniques. The user can also specify if a spike-and-slab prior on factor loadings is applied, which promotes sparsity in factor loadings by ensuring that only a few features have strong contributions while others are near zero. The user may apply the automatic relevance determination (ARD) priors on factor loadings, allowing the model to automatically determine which factors are relevant for each view. In addition, parameters can specify the training process of the model, including the mode of convergence of the algorithm, the use of stachastic inference, the seed for reproducibility, and the maximum number of iterations before the model training is interrupted.
+
+3.  Add the model parameters to the untrained MOFA model and initiate the training of the model.
+
+```{r}
+#| eval: true
+#| message: true
+#| warning: true 
+## define the model parameterss
+## data options
+data_opts <- get_default_data_options(MOFAobject)
+data_opts$scale_views <- FALSE ## default
+data_opts$scale_groups <- FALSE ## default
+data_opts$center_groups <- TRUE ## default
+
+## model_options
+model_opts <- get_default_model_options(MOFAobject)
+model_opts$num_factors <- 5# length(unique(proteomics$patient_ID))
+model_opts$spikeslab_weights <- TRUE ## default
+model_opts$ard_weights <- TRUE ## default
+
+## training options
+train_opts <- get_default_training_options(MOFAobject)
+train_opts$convergence_mode <- "slow"
+train_opts$stochastic <- FALSE
+train_opts$seed <- 2025
+train_opts$maxiter <- 10000
+
+## prepara MOFA and run
+MOFAobject <- prepare_mofa(
+    object = MOFAobject,
+    data_options = data_opts,
+    model_options = model_opts,
+    training_options = train_opts
+)
+
+## initialize MOFA model
+#reticulate::py_install("mofapy2")
+MOFAobject <- run_mofa(MOFAobject, 
+    use_basilisk = FALSE)
+```
+
+4.  Inspect the sanity of the model output. Plot data overview and verify that the dimensions for each data set are as expected Calculate the correlation scores between the factors. The correlation coefficients between the factors should be low, indicating that each factor captures distinct variation in the data.
+
+```{r mofa_data_overview}
+#| eval: true
+#| message: false
+#| warning: false
+#| results: false
+## plot data overview
+plot_data_overview(MOFAobject)
+```
+
+```{r mofa_correlation_between_factors}
+#| eval: true
+#| message: false
+#| warning: false
+#| results: false
+## sanity check: correlation between factors
+plot_factor_cor(MOFAobject)
+```
+
+5.  Examine explained variance of the factors and per modality. The analysis shows the proportion of variance explained by each latent factor across different views (modalities) and groups (if applicable). Higher variance explained per factor means that the factor captures a significant portion of the variation in that particular view. If the first few factors explain most of the variance, it suggests that only a subset of factors drive the structure in the data. If certain factors explain more variance in one view compared to another, it suggests that the factor is more specific to that modality. Co-variance in most factors indicates a strong relationship between the data types. If plotted separately, differences in variance explained between groups may indicate distinct biological patterns or variation in data structure across conditions.
+
+```{r mofa_variance_explained}
+#| eval: true
+#| message: false
+#| warning: false
+#| results: false
+## plot explained variance
+plot_variance_explained(MOFAobject, x = "view", y = "factor", 
+    plot_total = FALSE)
+
+## plot variance explained per data modality.
+plot_variance_explained(MOFAobject, x = "view", y = "factor",
+    plot_total = TRUE)[[2]]
+
+## The activity is defined by a contribution of \>=30% variance explained
+## in each layer per data modality, e.g. if a modality explains 28%
+## variance of Factor1, then it will be set to inactive.
+## plot active/inactive per data modality
+.var <- calculate_variance_explained(MOFAobject)$r2_per_factor$group1
+apply(.var, MARGIN = 1, 
+        function(row_i) 100* row_i / sum(row_i)) |>
+    apply(MARGIN = 2, 
+        FUN = function(column_i) ifelse(column_i >= 30, "active", "inactive")) |>
+    as.data.frame() |>
+    tibble::rownames_to_column(var = "dataset") |>
+    tidyr::pivot_longer(cols = starts_with("F"), names_to = "Factor") |>
+    dplyr::mutate(dataset = factor(dataset),
+        value = factor(value), 
+        Factor = factor(Factor, levels = rownames(.var))) |>
+    ggplot(aes(x = dataset, y = Factor, fill = value)) +
+        geom_tile(stat = "identity", color = "black") +
+        scale_fill_manual(values = c("active" = "#505050", "inactive" = "#eeeeee")) +
+        xlab("") + ylab("")
+```
+
+## Model interpretation: Variance decomposition and analysis of factors
+
+1.  Define covariates and cofactors and add to metadata.
+
+```{r add_covariates}
+#| eval: true
+#| message: false
+#| warning: false
+#| results: false
+## define covariates and add to metadata
+covariates <- colData(metabolomics) |>
+    as.data.frame() |>
+    dplyr::select(-c(histology))
+MOFAobject@samples_metadata <- dplyr::left_join(
+    MOFAobject@samples_metadata, 
+    covariates, by = c("sample" = "name"))
+```
+
+2.  Analyse the association between latent factors and metadata (e.g., clinical metadata, information on demographics, experimental condition). Compute correlations between the learned MOFA factors and the user-specific covariates (continous or categorical). Visualize and examine the correlation coefficients and p-values. The intensity and sign of the color indicate the strength and direction of the correlation. Positive correlations suggest that an increase in the covariate is associated with an increase in the factor values. Negative correlations suggest an inverse relationship.
+
+```{r mofa_correlate_factors}
+#| eval: true
+#| message: false
+#| warning: false
+#| results: false
+## major covariates
+correlate_factors_with_covariates(MOFAobject, 
+    covariates = c("sample", "tissue", "patient_ID", "age_at_diagnosis",
+        "sex", "pstage", "ECOG", "smoking_status", "pack_years",
+        "recurrence"), 
+    plot = "r")
+correlate_factors_with_covariates(MOFAobject, 
+    covariates = c("sample", "tissue", "patient_ID", "age_at_diagnosis",
+        "sex", "pstage", "ECOG", "smoking_status", "pack_years",
+        "recurrence"), 
+    plot = "log_pval", alpha = 0.05)
+```
+
+3.  Plot the separation of the samples by factors. Each factor arranges the samples along a one-dimensional axis centered at zero, where the absolute value is not important; only the relative positioning of the samples matters. Samples with different signs on the axis indicate opposite "effects" along the inferred variation axis, with larger absolute values suggesting stronger effects. The interpretation of these factors is similar to that of principal components in PCA, where each factor represents a direction of variation in the data, and the separation of samples along these factors provides insight into the underlying patterns.
+
+```{r mofa_separation_samples_factors}
+#| eval: true
+#| message: false
+#| warning: false
+#| results: false
+allFactors <- get_factors(MOFAobject, factors = "all", as.data.frame = TRUE) |>
+    tibble::as_tibble() |>
+    dplyr::mutate(factor = gsub("Factor","F", factor))
+allFactors <- dplyr::left_join(allFactors, covariates, by = c("sample" = "name"))
+plotTab <- filter(allFactors, factor %in% c("F1", "F2", "F3", "F4", "F5")) |>
+    tidyr::spread(key = factor, value = value)
+plotTab$tissue <- as.character(plotTab$tissue)
+plotTab$patient_ID <- as.factor(plotTab$patient_ID)
+plotTab$sex <- as.factor(plotTab$sex)
+
+## Factor 1 and 2
+gg_factor1_factor2 <- ggplot(plotTab, aes(x = F1, y = F2)) +
+    geom_point(aes(x = F1, y = F2, color = patient_ID, shape = tissue),
+        stroke = 2, size = 4) +
+    scale_shape_manual(values = c(TU = 21, NAT = 22)) +
+    guides(color = guide_legend(ncol = 2)) +
+    ggnewscale::new_scale_colour() +
+    geom_point(aes(color = sex), size = 2) +
+    guides(color = guide_legend(ncol = 2)) +
+    xlab("Factor 1") + ylab("Factor 2") +
+    theme_bw() 
+
+## Factor 1 and 3
+gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
+    geom_point(aes(color = patient_ID, shape = tissue), stroke = 2, size = 4) +
+    scale_shape_manual(values = c(TU = 21, NAT = 22)) +
+    guides(color = guide_legend(ncol = 2)) +
+    ggnewscale::new_scale_colour() +
+    geom_point(aes(color = sex), size = 2) +
+    guides(color = guide_legend(ncol = 2)) +
+    xlab("Factor 1") + ylab("Factor 3") +
+    theme_bw()
+```
+
+4.  Analyse the weights of the factors. The weights represent how strongly each feature is associated with each factor. Features with little or no association to a factor will have values near zero, while those with a strong association will exhibit large absolute values. The sign of the weight indicates the direction of the effect: a positive weight means the feature has higher lievels in samples with positive factor values, while a negative weight indicates higher levels in samples with negative factor values.
+
+```{r}
+#| eval: true
+#| message: false
+#| warning: false
+#| results: false
+plot_top_weights(MOFAobject,
+  view = "metabolomics",
+  factor = 1,
+  nfeatures = 10,     # Number of features to highlight
+  scale = TRUE,          # Scale weights from -1 to 1
+  abs = FALSE             # Take the absolute value?
+)
+```
+
+5.  Analyse the feature intensities across samples and relationships between features using the information from the MOFA model. The visualizations are helpful for identifying patterns clusters, assessing data quality and batch effects, detecting potential outliers, and understanding how different features, factors, or sample groups contribute to the overall variation in the dataset. The visualisations should be created for each factor of interest and for the most important (e.g. top 10 or 20) features per factor (`choice of user`).
+
+```{r}
+#| eval: true
+#| message: false
+#| warning: false
+#| results: false
+plot_data_heatmap(MOFAobject, view = "metabolomics", factor = 1, features = 10,
+    ## extra arguments that are passed to the `pheatmap` function
+    cluster_rows = TRUE, cluster_cols = FALSE, show_rownames = TRUE, 
+    show_colnames = TRUE)
+
+plot_data_scatter(MOFAobject, view = "metabolomics", factor = 1, features = 10, 
+    add_lm = TRUE, color_by = "tissue")
+```
+
+# Differential Expression Analysis
+
+???? needed at all ????
+
+--\> use metaProViz?
+
+Differential analysis identifies metabolites with significant changes between conditions. Selecting appropriate statistical tests depends on the data distribution and experimental design.
+
+## Statistical Testing
+
+```{r}
+
+# Perform moderated t-tests for each metabolite
+
+```
+
+. Adjust for multiple testing. Multiple testing correction (e.g., FDR) is critical to reduce false positives. Note, when dealing with high number of samples --\> inflation of p-values still persists (see ... for a discussion for RNAseq data). Alternatively, you might use non-parametric tests such as the ...
+
+. Check assumption of normality. When performing t-tests or ANOVA, assumptions of normality and homoscedasticity should be verified. For non-parametric data, alternative tests like Wilcoxon rank-sum can be considered.
+
+The limma method assumes that the residuals of the linear model are approximately normally distributed. Check this by
+
+A. Histogram of Residuals After fitting a linear model, plot the residuals to visually inspect normality:
+
+```{r}
+# design <- model.matrix(~ factor(c(1,1,2,2)))  # Simple two-group design
+# fit <- lmFit(expression_data, design)
+# 
+# # Get residuals
+# residuals <- residuals(fit)
+# 
+# # Plot histogram
+# hist(residuals, breaks = 50, main = "Histogram of Residuals", xlab = "Residuals")
+
+```
+
+B. Q-Q plot
+
+```{r}
+# qqnorm(residuals)
+# qqline(residuals, col = "red")}
+```
+
+## Visualisation of differential analysis results
+
+# Pathway and network analysis
+
+--\> we can use Progeny to test factor weights of proteomics data and check for up/downregulation of pathways
+
+## Pathway enrichment
+
+Pathway enrichment analysis links significant metabolites to biological pathways, providing context for observed changes. Ensure the metabolite identifiers match the database (e.g., HMDB IDs).
+
+```{r}
+```
+
+## Building metabolite networks
+
+1.  Calculate
+
+Networks constructed using correlations or pathway co-membership require thresholds to filter noise. For correlation networks, a balance between sensitivity and specificity is necessary.
+
+# Network analysis using statistical methods
+
+Statistical analysis uncovers pairwise relationships between metabolites and/or proteins within each modality. The analasis can be done to assess the co-occurence, association, or regulation of features within a data set without any prior knowledge. The calculation of pairwise coefficients is often done via the Pearson or Spearman correlation calculation method since it is useful for exploratory analysis to identify feature pairs that are correlated, which can suggest potential biological relationships or shared pathways. Other methods exist and may be more suitable for the question at hand, such as ARACNE (Algorithm for the Reconstruction of Accurate Cellular Networks), Bayesian methods, CLR (Context Likelihood of Relatedness), GGM (Gaussian Graphical model),  linear regression using LASSO (Least Absolute Shrinkage and Selection Operator) regularisation, partial Pearson correlation,  Random Forest, partial Spearman correlation, or. We will showcase the creation of statistical networks based on the implemented functionality of the MetNet [@Naake2019] package.
+
+1.  Choose an algorithm based on the data and biological question:
+
+- *ARACNE* represents an MI-based approach that removes indirect interactions using data processing inequality. The algorith should be used when aiming to extract the most relevant direct feature interactions from MI-based networks. It is more accurate than pure MI-based methods by reducing false positives by filtering indirect edges. The algorithm requires large sample sizes to estimate MI accurately.
+- *CLR* uses mutual information (MI) to infer regulatory relationships, normalizing interactions for each feature. The algorithm works well when working with noisy or indirect regulatory influences. It improves MI-based inference by reducing false positives and performs well for global network structures. The algorithm assumes that regulatory interactions follow a Gaussian-like distribution, which may not always be true.
+- *GGM* estimates a sparse precision matrix (inverse covariance) to infer direct interactions. The algorithm can be used when assuming a multivariate Gaussian structure in expression data. It identifies direct dependencies and avoids indirect correlations. The algorithm requires large sample sizes to obtain estimates accurately.
+-  *Linear regression using LASSO regulatisation* identifies regulatory network by selecting a sparse set of predictor features for each target feature, thereby reducing the number of spurious edges in a network. The algorithm handles high-dimensional data well, reduces overfitting, and provides an interpretable sparse network. The algorithm assumes a linear relationship, may struggle with correlated predictors (features with similar expression profiles, and may be computationally expensive.
+-   *Pearson Correlation* measures linear relationships between feature expression/abundance profiles. The algorithm should be used when linear dependencies exist between feature expression/abundance levels. The algorith is simple, computationally efficient, and easily interpretable. It does not capture non-linear relationships and is sensitive to noise.
+-   *Partial Pearson Correlation* identifies direct regulatory interactions by controlling for indirect effects. It can be used when confounding influences in a network must be corrected. The algorith removes indirect correlations, providing clearer direct relationships. It reequires large sample sizes to compute reliably.
+-   *Random Forest* infers regulatory network using feature importance scores from an ensemble of decision trees. The algorithm works well when dealing with non-linear relationships and heterogeneous data. It captures complex dependencies, is robust to noise, and does not assume a specific distribution. The algorithm can be computationally expensive and may overfit if not tuned properly.
+-   *Spearman Correlation* captures monotonic (rank-based) relationships between feature expression/abundance levels. The algorithm may be used when the data does not follow a normal distribution or when looking for ranked relationships. It is robust to outliers and captures non-linear relationships. The algorithm is less powerful for detecting direct gene interactions.
+- *Partial Spearman Correlation* is similiar to partial Pearson correlation but for rank-based dependencies. The algorithm controls for confounding variables while dealing with non-linear relationships. It handles non-linearity and indirect interactions. It is less widely used in regulatory network inference and may be computationally demanding.
+- *Bayesian Network*  Use case: Infers GRNs by modeling conditional dependencies between genes using a probabilistic graphical model. When to use: When prior biological knowledge is available and probabilistic modeling is needed. Advantages: Handles noise well, allows for causal inference, and accommodates missing data. Disadvantages: Computationally expensive, requires strong prior assumptions, sensitive to sample size.
+
+2.  Calculate the adjacency matrix using the `MetNet` [@Naake2017]. Specify the algorithms to be run. (optional) Apply the Benjamini-Hochberg method for p-value adjustment for Pearson and Spearman correlation. The result of each algorithm is stored in a respective assay of the `AdjacencyMatrix` object, an extension of the `SummarizedExperiment` class. Note, that depending on the chosen algorithm, the adjacency matrices are not necessarily symmetric.
+
+```{r}
+stat_adj <- imputeAssay(assay(metabolomics), "MinDet") |>
+    statistical(model = c("pearson", "spearman", "randomForest"), 
+                                  p.adjust = "BH")
+```
+
+2.  Examine the distribution of similarity coefficients.
+
+3.  (optional) Retain highly correlating values (`choice of user`). Feature pairs with low
+    coefficients will be regarded as noise and removed from the adjacency 
+    matrix.
+
+```{r}
+args_thr <- list(filter = "pearson_coef > 0.8 & pearson_pvalue < 0.05")
+stat_adj_thr <- threshold(am = stat_adj, type = "threshold", args = args_thr)
+
+```
+
+4.  Create a graph from the consensus adjacency matrix.
+
+```{r}
+g <- graph_from_adjacency_matrix(assay(stat_adj_thr, "consensus"), weighted = FALSE, 
+                            mode = "directed")
+```
+
+6.  (optional) Remove the singleton components and obtain the induced subgraph.
+
+```{r}
+components_g <- igraph::components(g)
+components_keep <- which(components_g$csize > 1)
+V_keep <- names(components_g$membership)[
+    components_g$membership %in% components_keep]
+g_keep <- induced_subgraph(g, V_keep)
+```
+
+5.  Visualize network. Results from upstream analyses can be mapped to the network. As an example, the weights of latent factor 1 of the trained MOFA model can be used for colouring of the network nodes. Alternatively, we can use logFC of the differential expression analysis.
+
+```{r}
+#| eval: false
+attributes_df <- get_weights(MOFAobject)$metabolomics |>
+    as.data.frame() 
+attributes_df <- cbind(name = rownames(get_weights(MOFAobject)$metabolomics), 
+    attributes_df)
+g_keep <- add_vertex_attributes(g = g_keep, attributes = attributes_df)
+
+# Create a color gradient: Blue (low) → White (neutral) → Red (high)
+colors <- colorRampPalette(c("blue", "white", "red"))(100)  # 100 gradient steps
+
+# Normalize logFC values to fit within the color gradient index (1 to 100)
+factor1_scaled <- round(scales::rescale(V(g_keep)$Factor1, to = c(1, 100)))
+
+# Assign colors based on scaled logFC values
+V(g)$color <- colors[factor1_scaled]
+
+plot(g_keep, vertex.label.cex = 0.1, vertex.size = 0.5)
+```
+
+6.  Choose and apply module determination algorithm (`choice of user`). To detect substructures in the graph, module determination algorithms can be applied on the graph. Common algorithms are (`igraph` implementation in brackets, see @tbl-communitydetection for further details):
+- *Community structure detection based on edge betweenness* (`cluster_edge_betweenness`) detects communities by iteratively removing edges with the highest betweenness centrality, splitting the network into distinct modules. It works well for small graphs, provides a clear hierarchical structure. The algorithm may be computationally expensive for large networks.
+- *Community structure detection via greedy optimization of modularity* (`cluster_fast_greedy`) uses hierarchical agglomeration to merge nodes into communities, optimizing the modularity at each step. The algorithm works efficiently for large graphs, but 
+is less effective for networks with overlapping communities.
+- *Community structure detection algorithm based on interacting fluids* (`cluster_fluid_communities`) uses label propagation with a fixed number of communities, allowing them to expand dynamically based on node density. The algorithm is fast. The algorithm requires to predefine the number of communities and may yield inconsistent results across runs.
+- *Community structure detection based on Infomap* (`cluster_infomap`) works by simulating random walks on the network and compressing the path description to reveal the best modular structure. The idea is that if a network has well-defined communities, a random walker will spend more time inside a community before jumping to another one. The algorithm captures this by trying to minimize the description length of the walk, effectively grouping nodes that are frequently visited together. The algorithm may be computationally demanding and is sensitive to parameter choices.
+- *Community structure detection detection based on propagating labels* (`cluster_label_prop`) assigns labels to vertices, which spread iteratively based on majority voting until convergence. The algorithm scales linearly with the number of nodes and is, thus, works well on large networks. Due to the random nature of initiation, the results can be unstable and inconsistent for certain networks.
+- *Community structure detection detection based on leading eigen* (`cluster_leading_eigen`) uses spectral clustering by computing the leading eigenvectors of a modularity matrix to find communities. The algorithm may be computationally expensive for large networks.
+- *Community structure detection using the Leiden algorithm* (`cluster_leiden`) is a faster version of the Louvain algorithm and yields more accurate solutions. It iteratively refines partitions to ensure well-connected communities by optimizing either the modularity or the Constant Potts model, which does not suffer from the resolution limit. The algorithm may have difficulties finding small communities.
+- *Community structure detection by multi-level optimization of modularity* (`cluster_louvain`) optimizes modularity by merging hierarchically small communities into larger ones in a greedy manner. The algorithm scales well to large networks. It may produce different results on each run and may has difficulties finding small communities.
+- *community structure detection using the maximum modularity* (`cluster_optimal`) calculates the optimal community structure by maximizing the modularity over all possible partitions. The algorithm guarantees the best modularity score, but is computationally expensive for large network.
+- *Community structure detection based on statistical mechanics* (`cluster_spinglass`) models community detection as an energy minimization problem via a spin-glass model and simulated annealing. The algorithm is computationally expensive for large networks and may be sensitive to parameter settings.
+- *Community structure detection based on short random walks* (`cluster_walktrap`) simulates random walks on the network to detect community structure, assuming vertices within the same community are more likely to be visited in one walk. The algorithm may be slow for large networks.
+
+::: {.tbl-cap}
+Table: **Compatibility of community detection algorithms with network properties** {#tbl-communitydetection}
+:::
+
+:::{.table width="100%"}
+| algorithm                   | undirected   | directed     | unweighted   | weighted     |
+|-----------------------------|--------------|--------------|--------------|--------------|
+| `cluster_edge_betweenness`  |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
+| `cluster_fast_greedy`       |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
+| `cluster_fluid_communities` |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|  $$\times$$  |
+| `cluster_infomap`           |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
+| `cluster_label_prop`        |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
+| `cluster_leading_eigen`     |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
+| `cluster_leiden`            |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
+| `cluster_louvain`           |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
+| `cluster_optimal`           |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
+| `cluster_spinglass`         |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
+| `cluster_walktrap`          |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|  
+:::
+
+:::{.table-widths="28,17,17,21,17"}
+:::
+
+<!-- : Compatibility of community detection algorithms with network properties {#tbl-community_detection, tbl-colwidths="[28, 17, 17, 21, 17]"} -->
+
+```{r}
+community <- cluster_optimal(g_keep, weights = E(g_keep))
+```
+
+7.  Downstream analysis on modules, e.g. decoupleR, composition of networks, etc.?
+
+# Analysis using biological knowledge, footprinting
+
+ocEAn?? pathway analysis?
+
+
+
+# Conclusion
+
+This chapter demonstrated how to perform metabolomics data analysis in R using a network-based approach. By integrating tools for preprocessing, differential analysis, pathway and correlation analysis, and data integration, R provides a comprehensive framework for deriving biological insights from metabolomics datasets. Parameters such as thresholds, normalization methods, and correction techniques must be carefully chosen to ensure the robustness and reliability of the results.
+
+# References
+
+Morgan M, Obenchain V, Hester J, Pagès H (2024). SummarizedExperiment: A container (S4 class) for matrix-like assays. doi:10.18129/B9.bioc.SummarizedExperiment, R package version 1.37.0, https://bioconductor.org/packages/SummarizedExperiment.
