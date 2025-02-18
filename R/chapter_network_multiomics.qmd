@@ -840,6 +840,8 @@ community <- cluster_optimal(g_keep, weights = E(g_keep))
 
 7.  Downstream analysis on modules, e.g. decoupleR, composition of networks, etc.?
 
+<!-- !!! Christina, please add here !!! -->
+
 # Analysis using biological knowledge, footprinting
 
 <!-- !!! Christina, please add here !!! -->
