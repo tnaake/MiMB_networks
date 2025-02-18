@@ -746,10 +746,10 @@ We will showcase the creation of statistical networks based on the implemented f
 ```{r}
 stat_adj <- imputeAssay(assay(metabolomics), "MinDet") |>
     statistical(model = c("pearson", "spearman", "randomForest"), 
-                                  p.adjust = "BH")
+        p.adjust = "BH")
 ```
 
-2.  Examine the distribution of similarity coefficients.
+2.  Examine the distribution of similarity coefficients and p-values, if available.
 
 3.  (optional) Retain highly correlating values (`choice of user`). Feature pairs with low
     coefficients will be regarded as noise and removed from the adjacency 
