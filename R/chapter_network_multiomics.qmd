@@ -660,8 +660,7 @@ plot_data_scatter(MOFAobject, view = "metabolomics", factor = 1, features = 10,
 
 # Differential Expression Analysis
 
-???? needed at all ????
-
+<!-- !!! Christina, please add here !!! -->
 --\> use metaProViz?
 
 Differential analysis identifies metabolites with significant changes between conditions. Selecting appropriate statistical tests depends on the data distribution and experimental design.
@@ -705,6 +704,8 @@ B. Q-Q plot
 
 # Pathway and network analysis
 
+<!-- !!! Christina, please add here !!! -->
+
 --\> we can use Progeny to test factor weights of proteomics data and check for up/downregulation of pathways
 
 ## Pathway enrichment
@@ -716,9 +717,7 @@ Pathway enrichment analysis links significant metabolites to biological pathways
 
 ## Building metabolite networks
 
-1.  Calculate
-
-Networks constructed using correlations or pathway co-membership require thresholds to filter noise. For correlation networks, a balance between sensitivity and specificity is necessary.
+<!-- !!! Christina, please add here !!! -->
 
 # Network analysis using statistical methods
 
@@ -843,6 +842,7 @@ community <- cluster_optimal(g_keep, weights = E(g_keep))
 
 # Analysis using biological knowledge, footprinting
 
+<!-- !!! Christina, please add here !!! -->
 ocEAn?? pathway analysis?
 
 Footprinting connects metabolomics data to upstream regulatory elements. Parameters like pathway size and significance thresholds should be adjusted based on the dataset.
