@@ -89,21 +89,26 @@ if (!require("vsn", quietly = TRUE))
 library("vsn")
 ```
 
-# Introduction to metabolomics and proteomics pathway and network analysis
+# Introduction
+<!-- # Introduction to metabolomics and proteomics pathway and network analysis -->
 
 Networks provide an intuitive and powerful framework to study metabolomics and proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, shared pathways) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase R's extensive ecosystem for metabolomics and proteomics analysis, including packages like `igraph`, `MOFA`, and `decoupler`.
 
 For this chapter, we will use the terms knowledge networks and experimental networks. Knowledge networks are constructed using existing biochemical and biological information, helping to interpret metabolomics and proteomics data within the framework of known pathways. For instance, a metabolic network represents a knowledge network, where metabolites act as vertices and their biochemical conversions form the edges. In contrast, experimental networks are directly derived from metabolomics and proteomics data, linking metabolites and proteins based on observed relationships like correlation or, in case of MS/MS data, spectral similarity. Both types of networks can be explored using advanced statistical methods, graph analysis, and data-driven techniques to reveal meaningful patterns and connections within the dataset.
 
+# Materials
+
 In this chapter, we will use the dataset from [@Gegner2024] to showcase functionality in the statistical programming language `R` to analyse metabolomics and proteomics using network and pathway analysis tools. We present here an end-to-end pipeline starting with data import, data preprocessing, multi-omics integration and downstream analysis to interpret the latent factors of the model. The data sets are proteomics and metabolomics measurement from fresh-frozen tumor and non-tumorous (adjacent) tissue of patients with lung adenocarcinoma. Metabolomics was acquired using the MxP(r) Quant 500 kit (Biocrates) using LC-MS/MS and FIA-MS/MS measurements run on a UPLC I-class PLUS (Waters) system coupled to a SCIEX QTRAP 6500 + mass spectrometry system in electrospray ionization (ESI) mode. Proteomics was aquired using an Easy nLC 1200 system (Thermo) coupled to a timsTOF Pro mass spectrometer (Bruker Daltonics). For further details on the analytical methods refer to @Gegner2024.
 
 For space restrictions, some of the data wrangling steps and downstream analyses will not be displayed in this chapter and we refer the interested reader to check the complete and reproducible protocol available via www.github.com/tnaake/MiMB_networks/R/chapter_network_multiomics.qmd.
 
-# Data preprocessing and quality assessment and quality control (QA/QC)
+# Methods
+
+## Data preprocessing and quality assessment and quality control (QA/QC)
 
 Preprocessing and quality assessment and quality control (QA/QC) are critical to ensure the integrity of metabolomics data. Steps typically include control for outliers, data normalization, missing value imputation (optional), and removal of batch effects. Each step requires careful parameter selection based on the dataset and experimental conditions. For a multi-omics analysis using MOFA as presented here, it is paramount to ensure that the modalities have the same number of samples with identical sample names.
 
-## Load the data sets, data wrangling
+### Load the data sets, data wrangling
 
 1.  Load the proteomics and metabolomics data sets via import functions from `MatrixQCvisUtils` (available via www.github.com/tnaake/MatrixQCvisUtils). Importing the XLSX sheets into R via the `MatrixQCvisUtils` package, creates `SummarizedExperiment` (@Morgan2024) objects, popular data formats within the R/Bioconductor framework. The `SummarizedExperiment` class stores the measured data (available via `assay`), next to the metadata associated to the samples (available via `colData`) and features (available via `rowData`).
 
@@ -275,7 +280,7 @@ rowData(proteomics)$SYMBOL <- unlist(lapply(rowData(proteomics)$feature,
     function(x) paste(symbol[strsplit(x, split = ";")[[1]]], collapse = ";")))
 ```
 
-## Removal of features in the data sets
+### Removal of features in the data sets
 
 Each data set comes typically with information on the reliability of features. The information can be used to remove non-reliable features. After this step, the quality of the data sets are improved. Filtering and removal of the features should be tailored to the study design and the knowledge of the data set. Stricter filtering reduces false positives but may remove true low-abundance features.
 
@@ -331,7 +336,7 @@ valid_features[is.na(valid_features)] <- TRUE
 proteomics <- proteomics[valid_features, ]
 ```
 
-## Quality assessment and quality control (QA/QC)
+### Quality assessment and quality control (QA/QC)
 
 The next step in the preprocessing pipeline is to assess the quality of the data, including both the measurements and the metadata values, and to control for it.
 
@@ -402,7 +407,7 @@ plot_grid(gg_meanSd, gg_meanSd_log, gg_pca, gg_pca_log, gg_dist, gg_dist_log,
     ncol = 2, labels = "AUTO")
 ```
 
-## Normalization, batch correction, transformation, missing value imputation
+### Normalization, batch correction, transformation, missing value imputation
 
 Tools, such as MatrixQCvis (@Naake2022) can be ideally used to explore data quality interactively and optimize choice of batch correction, normalization, or transformation methods. The `MatrixQCvis` package offers utility functions to perform normalization, batch reduction, transformation and imputation using a variety of methods (`normalizeAssay`, `batchCorrectionAssay`, `transformAssay`, `imputeAssay`).
 
@@ -432,11 +437,11 @@ assay(proteomics) <- assay(proteomics) |>
     transformAssay(method = "log")
 ```
 
-# Multi-omics integration using MOFA
+## Multi-omics integration using MOFA
 
 MOFA (Multi-Omics Factor Analysis, @Argelaguet2019) integrates omics modalities using a factor analysis to uncover latent factors that explain the shared variation across different datasets. Proper data wrangling and preprocessing as discussed in previous sections (e.g., normalization, transformation) are critical steps in ensuring the reliability and interpretability of the results.
 
-## Model building
+### Model building
 
 1.  Define the modalities (omics data types) to be included in the model. Make sure that the modalities are properly normalized and transformed. (optional) Define group information. Groups refer to the different subsets or categories within the data that can be used to model variation across multiple omics layers.
 
@@ -551,7 +556,7 @@ apply(.var, MARGIN = 1,
         xlab("") + ylab("")
 ```
 
-## Model interpretation: Variance decomposition and analysis of factors
+### Model interpretation: Variance decomposition and analysis of factors
 
 1.  Define covariates and cofactors and add to metadata.
 
@@ -662,14 +667,14 @@ plot_data_scatter(MOFAobject, view = "metabolomics", factor = 1, features = 10,
     add_lm = TRUE, color_by = "tissue")
 ```
 
-# Differential Expression Analysis
+## Differential Expression Analysis
 
 <!-- !!! Christina, please add here !!! -->
 --\> use metaProViz?
 
 Differential analysis identifies metabolites with significant changes between conditions. Selecting appropriate statistical tests depends on the data distribution and experimental design.
 
-## Statistical Testing
+### Statistical Testing
 
 ```{r}
 
@@ -704,15 +709,15 @@ B. Q-Q plot
 # qqline(residuals, col = "red")}
 ```
 
-## Visualization of differential analysis results
+### Visualization of differential analysis results
 
-# Pathway and network analysis
+## Pathway and network analysis
 
 <!-- !!! Christina, please add here !!! -->
 
 --\> we can use Progeny to test factor weights of proteomics data and check for up/downregulation of pathways
 
-## Pathway enrichment
+### Pathway enrichment
 
 Pathway enrichment analysis links significant metabolites to biological pathways, providing context for observed changes. Ensure the metabolite identifiers match the database (e.g., HMDB IDs).
 
@@ -724,7 +729,7 @@ Pathway enrichment analysis links significant metabolites to biological pathways
 
 <!-- add other points??? -->
 
-# Experimental network analysis using statistical methods
+## Experimental network analysis using statistical methods
 
 Statistical analysis uncovers pairwise relationships between metabolites and/or proteins within each modality. The analysis can be done to assess the co-occurence, association, or regulation of features within a data set without any prior knowledge. The calculation of pairwise coefficients is often done via the Pearson or Spearman correlation calculation method since it is useful for exploratory analysis to identify feature pairs that are correlated, which can suggest potential biological relationships or shared pathways. Other methods exist and may be more suitable for the question at hand, such as ARACNE (Algorithm for the Reconstruction of Accurate Cellular Networks), Bayesian methods, CLR (Context Likelihood of Relatedness), GGM (Gaussian Graphical model),  linear regression using LASSO (Least Absolute Shrinkage and Selection Operator) regularization, partial Pearson correlation,  Random Forest, partial Spearman correlation, or. In the network, vertices represent features, such as metabolites or proteins, while edges represent the statistical relationship, such as correlation coefficients.
 
@@ -849,7 +854,7 @@ community <- cluster_optimal(g_keep, weights = E(g_keep))
 
 <!-- !!! Christina, please add here !!! -->
 
-# Analysis using biological knowledge, footprinting
+## Analysis using biological knowledge, footprinting
 
 <!-- !!! Christina, please add here !!! -->
 ocEAn?? pathway analysis?
@@ -865,3 +870,5 @@ This chapter demonstrated how to perform metabolomics data analysis in R using a
 # References
 
 Morgan M, Obenchain V, Hester J, Pagès H (2024). SummarizedExperiment: A container (S4 class) for matrix-like assays. doi:10.18129/B9.bioc.SummarizedExperiment, R package version 1.37.0, https://bioconductor.org/packages/SummarizedExperiment.
+
+# Figure Captions/Table Captions/Tables
