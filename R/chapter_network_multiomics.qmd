@@ -114,6 +114,11 @@ Preprocessing and quality assessment and quality control (QA/QC) are critical to
 1.  Load the proteomics and metabolomics datasets via import functions from *MatrixQCvisUtils* (available via www.github.com/tnaake/MatrixQCvisUtils). Importing the XLSX sheets into *R* via the *MatrixQCvisUtils* package, creates *SummarizedExperiment* (@Morgan2024) objects, popular data formats within the R/Bioconductor framework. The *SummarizedExperiment* class stores the measured data (available via *assay*), next to the metadata associated to the samples (available via *colData*) and features (available via *rowData*).
 
 ```{r processing_load}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 ## load metabolomics data
 metabolomics <- biocrates("../data/12014_2024_9501_MOESM4_ESM.xlsx", 
     sheet = 1, colNames = FALSE)
@@ -133,7 +138,10 @@ proteomics <- maxquant(file = "../data/12014_2024_9501_MOESM3_ESM.xlsx",
 3.  (optional) Depending on 2., identify the nature of missing features, harmonize sample names, correct feature names, harmonize metadata and check for completeness.
 
 ```{r processing_harmonize}
+#| eval: true
 #| echo: false
+#| message: false
+#| warning: false
 #| results: false
 ## Loading the data from the supplemental material from @Gegner2024, the
 ## sample names are not correctly imported to the *R* session. In this
@@ -229,8 +237,11 @@ proteomics <- proteomics[, colnames(metabolomics)]
 4.  (optional) Identify additional metadata, for example clinical parameters or translated IDs for metabolites (e.g. HMDB, KEGG, ChEBI ids) and proteins (e.g. Entrez, SYMBOL, Uniprot ids), from other sources. Add the metadata to the respective slots of the *SummarizedExperiment* object (*rowData* for features, *colData* for samples).
 
 ```{r processing_add_metadata}
-#| message: false
+#| eval: true
 #| echo: false
+#| message: false
+#| warning: false
+#| results: false
 ## For this dataset, additional metadata on clinical parameters are
 ## missing. We add information from Table 1 from @Gegner2024 to the
 ## *SummarizedExperiment* objects. For brievity, the steps can be followed
@@ -289,6 +300,11 @@ Each dataset comes typically with information on the reliability of features. Th
 1.  Remove low or high abundance features. Low intensity features may be due to noise or below the limit of detection or quantification. High intensity may be above the limit of quantification, the linear dynamic range, or the calibration range. Removing these features prevents artifacts in downstream statistical analyses. For the targeted metabolomics dataset, ensure that the dataset only includes high-quality metabolite measurements. The MetIDQ output provides assessment of the quality of each measurement, encoded by a color code of each cell (dark blue: \< LOD (Limit of Detection; 3x signal to noise); light blue: \< LLOQ (Lower Limit of Quantification; 10x signal to noise) or \> ULOQ (Upper Limit of Quantification); green: valid; Yellow: Internal Standard out of range). Remove the low-quality features that do not meet the defined quantification criteria (*choice of user*). In this case, we will retain only those metabolites where at least 50% of the measurements fall within the quantification limits (valid). This filtering step ensures that the dataset primarily consists of reliable data points minimizing the impact of imprecise measurements.
 
 ```{r processing_qc_metidq}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 source("utils.R")
 valid_features <- metIDQ_get_high_quality_features(
     file = "../data/12014_2024_9501_MOESM4_ESM.xlsx", threshold = 0.5)
@@ -298,6 +314,11 @@ metabolomics <- metabolomics[valid_features, ]
 2.  (optional) Remove those features that are only detected in a subset of samples (*choice of user*). High levels of missing data (**NA** values can reduce statistical power, and while imputation techniques can be applied, imputation of excessive number of missing values per feature lead to unreliable results. Additionally, features identified in only a few biological replicates may lack reproducibility, impacting downstream analyses. Filtering criteria can be set on a global level, such as removing features absent in more than 50% of the samples, or based on metadata of the dataset, such as removing features detected in fewer than two biological replicates per condition. More stringent thresholds, such as requiring detection in at least 50% of replicates within each condition, can further improve dataset reliability. The choice of filtering thresholds should be guided by domain-specific knowledge and dataset's characteristics. Overly strict filtering may remove biologically relevant proteins that are present only in specific subsets of samples, such as particular cell lines or patient groups. Filtering strategies should be carefully considered to maintain a balance between data quality and the the retention of meaningful biological information.
 
 ```{r processing_qc_proteomics_remove_low_number_features}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 ## we will remove the features that are detected in less than ten samples 
 valid_features <- apply(assay(proteomics), MARGIN = 1, FUN = function(rows_i) !(sum(!is.na(rows_i)) < 10))
 proteomics <- proteomics[valid_features, ]
@@ -308,6 +329,11 @@ proteomics <- proteomics[valid_features, ]
 4.  Remove features with a standard deviation of 0 as these features do not contain information for biological interpretation.
 
 ```{r processing_qc_sd}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 ## metabolomics
 valid_features <- apply(assay(metabolomics), MARGIN = 1, sd, na.rm = TRUE) > 0
 metabolomics <- metabolomics[valid_features, ]
@@ -317,9 +343,14 @@ valid_features <- apply(assay(proteomics), MARGIN = 1, sd, na.rm = TRUE) > 0
 proteomics <- proteomics[valid_features, ]
 ```
 
-5.  For proteomics data, ensure that the dataset only includes high-quality protein measurements. In the proteomics dataset generated by MaxQuant [@Cox2008], peptide counts serve as an indicator of the reliability of protein identification. To ensure data quality, we will filter out proteins identified with low confidence (*choice of user*. In this case, we will remove any protein that has fewer than two peptides supporting its identification. This approach helps retain only well-supported protein identifications, enhancing the robustness of downstream analyses.
+5.  For proteomics data, ensure that the dataset only includes high-quality protein measurements. In the proteomics dataset generated by MaxQuant [@Cox2008], peptide counts serve as an indicator of the reliability of protein identification. To ensure data quality, we will filter out proteins identified with low confidence (*choice of user*). In this case, we will remove any protein that has fewer than two peptides supporting its identification. This approach helps retain only well-supported protein identifications, enhancing the robustness of downstream analyses.
 
 ```{r processing_qc_peptide_counts}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 valid_features <- lapply(
     strsplit(rowData(proteomics)$peptide_counts_all, split = ";"), 
     function(i) max(as.numeric(i)) >= 2) |> 
@@ -333,6 +364,11 @@ proteomics <- proteomics[valid_features, ]
 7.  For the proteomics dataset, remove the features with reverse sequences as they do not correspond to real biological proteins. Reverse sequences refer to decoy sequences generated by reversing the amino acid sequence of real proteins. Reverse sequences are commonly used as negative controls in target-decoy strategies for false discovery rate estimation in mass-spectrometry-based proteomics.
 
 ```{r processing_qc_reverse}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 valid_features <- rowData(proteomics)$reverse != "+" 
 valid_features[is.na(valid_features)] <- TRUE
 proteomics <- proteomics[valid_features, ]
@@ -358,8 +394,11 @@ The *MatrixQCvis* package [@Naake2022] performs QA/QC on *SummarizedExperiment* 
 The Figure \ref{fig:qc} shows some visualizations of *shinyQC* applied on the proteomics dataset.
 
 ```{r processing_qc_matrixqcvis_prepare_plots, fig.show="hide"}
-#| message: false
+#| eval: true
 #| echo: false
+#| message: false
+#| warning: false
+#| results: false
 ## A: meanSdPlot of raw values
 gg_meanSd <- meanSdPlot(assay(proteomics), ranks = TRUE)$gg +
     theme(legend.position = "none")
@@ -404,8 +443,12 @@ gg_dist_log <- distSample(d, proteomics, label = "tissue",
 ```
 
 ```{r processing_qc_matrixqcvis_final_plot}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 plot_grid(gg_meanSd, gg_meanSd_log, gg_pca, gg_pca_log, gg_dist, gg_dist_log,
-    
     ncol = 2, labels = "AUTO")
 ```
 
@@ -421,6 +464,7 @@ Tools, such as MatrixQCvis [@Naake2022] can be ideally used to explore data qual
 
 ```{r processing_normalization}
 #| eval: true
+#| echo: false
 #| message: false
 #| warning: false
 #| results: false
@@ -451,6 +495,7 @@ MOFA [@Argelaguet2018] integrates omics modalities using a factor analysis to un
 
 ```{r mofa_create_mofa}
 #| eval: true
+#| echo: false
 #| message: false
 #| warning: false
 #| results: false
@@ -468,8 +513,10 @@ MOFAobject <- create_mofa(
 
 ```{r mofa_run_mofa}
 #| eval: true
-#| message: true
-#| warning: true 
+#| echo: false
+#| message: false
+#| warning: false 
+#| results: false
 ## define the model parameterss
 ## data options
 data_opts <- get_default_data_options(MOFAobject)
@@ -479,7 +526,7 @@ data_opts$center_groups <- TRUE ## default
 
 ## model_options
 model_opts <- get_default_model_options(MOFAobject)
-model_opts$num_factors <- 5# length(unique(proteomics$patient_ID))
+model_opts$num_factors <- 5
 model_opts$spikeslab_weights <- TRUE ## default
 model_opts$ard_weights <- TRUE ## default
 
@@ -508,6 +555,7 @@ MOFAobject <- run_mofa(MOFAobject,
 
 ```{r mofa_data_overview}
 #| eval: true
+#| echo: false
 #| message: false
 #| warning: false
 #| results: false
@@ -517,6 +565,7 @@ plot_data_overview(MOFAobject)
 
 ```{r mofa_correlation_between_factors}
 #| eval: true
+#| echo: false
 #| message: false
 #| warning: false
 #| results: false
@@ -528,6 +577,7 @@ plot_factor_cor(MOFAobject)
 
 ```{r mofa_variance_explained}
 #| eval: true
+#| echo: false
 #| message: false
 #| warning: false
 #| results: false
@@ -566,6 +616,7 @@ apply(.var, MARGIN = 1,
 
 ```{r mofa_add_covariates}
 #| eval: true
+#| echo: false
 #| message: false
 #| warning: false
 #| results: false
@@ -582,17 +633,18 @@ MOFAobject@samples_metadata <- dplyr::left_join(
 
 ```{r mofa_correlate_factors}
 #| eval: true
+#| echo: false
 #| message: false
 #| warning: false
 #| results: false
 ## major covariates
 correlate_factors_with_covariates(MOFAobject, 
-    covariates = c("sample", "tissue", "patient_ID", "age_at_diagnosis",
+    covariates = c("tissue", "patient_ID", "age_at_diagnosis",
         "sex", "pstage", "ECOG", "smoking_status", "pack_years",
         "recurrence"), 
     plot = "r")
 correlate_factors_with_covariates(MOFAobject, 
-    covariates = c("sample", "tissue", "patient_ID", "age_at_diagnosis",
+    covariates = c("tissue", "patient_ID", "age_at_diagnosis",
         "sex", "pstage", "ECOG", "smoking_status", "pack_years",
         "recurrence"), 
     plot = "log_pval", alpha = 0.05)
@@ -602,6 +654,7 @@ correlate_factors_with_covariates(MOFAobject,
 
 ```{r mofa_separation_samples_factors}
 #| eval: true
+#| echo: false
 #| message: false
 #| warning: false
 #| results: false
@@ -643,6 +696,7 @@ gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
 
 ```{r mofa_plot_top_weights}
 #| eval: true
+#| echo: false
 #| message: false
 #| warning: false
 #| results: false
@@ -659,6 +713,7 @@ plot_top_weights(MOFAobject,
 
 ```{r mofa_plot_data_heatmap}
 #| eval: true
+#| echo: false
 #| message: false
 #| warning: false
 #| results: false
@@ -681,6 +736,11 @@ Differential analysis identifies metabolites with significant changes between co
 ### Statistical Testing
 
 ```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 
 # Perform moderated t-tests for each metabolite
 
@@ -695,6 +755,11 @@ The limma method assumes that the residuals of the linear model are approximatel
 A. Histogram of Residuals After fitting a linear model, plot the residuals to visually inspect normality:
 
 ```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 # design <- model.matrix(~ factor(c(1,1,2,2)))  # Simple two-group design
 # fit <- lmFit(expression_data, design)
 # 
@@ -709,6 +774,11 @@ A. Histogram of Residuals After fitting a linear model, plot the residuals to vi
 B. Q-Q plot
 
 ```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 # qqnorm(residuals)
 # qqline(residuals, col = "red")}
 ```
@@ -726,6 +796,11 @@ B. Q-Q plot
 Pathway enrichment analysis links significant metabolites to biological pathways, providing context for observed changes. Ensure the metabolite identifiers match the database (e.g., HMDB IDs).
 
 ```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 ```
 
 
@@ -741,20 +816,25 @@ We will showcase the creation of statistical networks based on the implemented f
 
 1.  Choose an algorithm based on the data and biological question:
 
-- *ARACNE* represents an MI-based approach that removes indirect interactions using data processing inequality. The algorith should be used when aiming to extract the most relevant direct feature interactions from MI-based networks. It is more accurate than pure MI-based methods by reducing false positives by filtering indirect edges. The algorithm requires large sample sizes to estimate MI accurately.
+- *ARACNE* represents an MI-based approach that removes indirect interactions using data processing inequality. The algorithm should be used when aiming to extract the most relevant direct feature interactions from MI-based networks. It is more accurate than pure MI-based methods by reducing false positives by filtering indirect edges. The algorithm requires large sample sizes to estimate MI accurately.
 - *CLR* uses mutual information (MI) to infer regulatory relationships, normalizing interactions for each feature. The algorithm works well when working with noisy or indirect regulatory influences. It improves MI-based inference by reducing false positives and performs well for global network structures. The algorithm assumes that regulatory interactions follow a Gaussian-like distribution, which may not always be true.
 - *GGM* estimates a sparse precision matrix (inverse covariance) to infer direct interactions. The algorithm can be used when assuming a multivariate Gaussian structure in expression data. It identifies direct dependencies and avoids indirect correlations. The algorithm requires large sample sizes to obtain estimates accurately.
--  *Linear regression using LASSO regulatization* identifies regulatory network by selecting a sparse set of predictor features for each target feature, thereby reducing the number of spurious edges in a network. The algorithm handles high-dimensional data well, reduces overfitting, and provides an interpretable sparse network. The algorithm assumes a linear relationship, may struggle with correlated predictors (features with similar expression profiles, and may be computationally expensive.
--   *Pearson Correlation* measures linear relationships between feature expression/abundance profiles. The algorithm should be used when linear dependencies exist between feature expression/abundance levels. The algorith is simple, computationally efficient, and easily interpretable. It does not capture non-linear relationships and is sensitive to noise.
--   *Partial Pearson Correlation* identifies direct regulatory interactions by controlling for indirect effects. It can be used when confounding influences in a network must be corrected. The algorith removes indirect correlations, providing clearer direct relationships. It reequires large sample sizes to compute reliably.
+-  *Linear regression using LASSO regularization* identifies regulatory network by selecting a sparse set of predictor features for each target feature, thereby reducing the number of spurious edges in a network. The algorithm handles high-dimensional data well, reduces overfitting, and provides an interpretable sparse network. The algorithm assumes a linear relationship, may struggle with correlated predictors (features with similar expression profiles, and may be computationally expensive.
+-   *Pearson Correlation* measures linear relationships between feature expression/abundance profiles. The algorithm should be used when linear dependencies exist between feature expression/abundance levels. The algorithm is simple, computationally efficient, and easily interpretable. It does not capture non-linear relationships and is sensitive to noise.
+-   *Partial Pearson Correlation* identifies direct regulatory interactions by controlling for indirect effects. It can be used when confounding influences in a network must be corrected. The algorithm removes indirect correlations, providing clearer direct relationships. It requires large sample sizes to compute reliably.
 -   *Random Forest* infers regulatory network using feature importance scores from an ensemble of decision trees. The algorithm works well when dealing with non-linear relationships and heterogeneous data. It captures complex dependencies, is robust to noise, and does not assume a specific distribution. The algorithm can be computationally expensive and may overfit if not tuned properly.
 -   *Spearman Correlation* captures monotonic (rank-based) relationships between feature expression/abundance levels. The algorithm may be used when the data does not follow a normal distribution or when looking for ranked relationships. It is robust to outliers and captures non-linear relationships. The algorithm is less powerful for detecting direct gene interactions.
-- *Partial Spearman Correlation* is similiar to partial Pearson correlation but for rank-based dependencies. The algorithm controls for confounding variables while dealing with non-linear relationships. It handles non-linearity and indirect interactions. It is less widely used in regulatory network inference and may be computationally demanding.
+- *Partial Spearman Correlation* is similar to partial Pearson correlation but for rank-based dependencies. The algorithm controls for confounding variables while dealing with non-linear relationships. It handles non-linearity and indirect interactions. It is less widely used in regulatory network inference and may be computationally demanding.
 - *Bayesian Network*  infers regulatory networks by modeling conditional dependencies between genes using a probabilistic graphical model. The algorithm may be used when prior biological knowledge is available and probabilistic modeling is needed. The algorithm handles noise well, allows for causal inference, and is able to handle missing data. It may be, however, computationally expensive, requires strong prior assumptions, and may be sensitive to sample size.
 
 2.  Calculate the adjacency matrix using the `MetNet` [@Naake2019]. Specify the algorithms to be run. (optional) Prior to running the model, check if the model tolerates missing values (**NA**) and impute values if needed. (optional) Apply the Benjamini-Hochberg method for p-value adjustment for Pearson and Spearman correlation. The result of each algorithm is stored in a respective assay of the *AdjacencyMatrix* object, an extension of the *SummarizedExperiment* class. Note, that depending on the chosen algorithm, the adjacency matrices are not necessarily symmetric.
 
 ```{r network_statistical}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 stat_adj <- imputeAssay(assay(metabolomics), "MinDet") |>
     statistical(model = c("pearson", "spearman"), 
         p.adjust = "BH")
@@ -767,14 +847,23 @@ stat_adj <- imputeAssay(assay(metabolomics), "MinDet") |>
     matrix. 
 
 ```{r network_threshold}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 args_thr <- list(filter = "pearson_coef > 0.8 & pearson_pvalue < 0.05")
 stat_adj_thr <- threshold(am = stat_adj, type = "threshold", args = args_thr)
-
 ```
 
 4.  Create a graph from the consensus adjacency matrix.
 
 ```{r network_graph}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 g <- graph_from_adjacency_matrix(assay(stat_adj_thr, "consensus"), 
     weighted = FALSE, mode = "directed")
 ```
@@ -782,6 +871,11 @@ g <- graph_from_adjacency_matrix(assay(stat_adj_thr, "consensus"),
 6.  (optional) Remove the singleton components and obtain the induced subgraph.
 
 ```{r network_graph_filtering}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 components_g <- igraph::components(g)
 components_keep <- which(components_g$csize > 1)
 V_keep <- names(components_g$membership)[
@@ -793,6 +887,10 @@ g_keep <- induced_subgraph(g, V_keep)
 
 ```{r network_visualisation}
 #| eval: false
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 attributes_df <- get_weights(MOFAobject)$metabolomics |>
     as.data.frame() 
 attributes_df <- cbind(name = rownames(get_weights(MOFAobject)$metabolomics), 
@@ -851,6 +949,11 @@ Table: **Compatibility of community detection algorithms with network properties
 <!-- : Compatibility of community detection algorithms with network properties {#tbl-community_detection, tbl-colwidths="[28, 17, 17, 21, 17]"} -->
 
 ```{r network_cluster}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 community <- cluster_label_prop(g_keep, weights = E(g_keep))
 ```
 
