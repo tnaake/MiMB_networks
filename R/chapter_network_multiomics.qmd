@@ -93,7 +93,7 @@ library("vsn")
 # Introduction
 <!-- # Introduction to metabolomics and proteomics pathway and network analysis -->
 
-Networks provide an intuitive and powerful framework to study metabolomics and proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, shared pathways) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase R's extensive ecosystem for metabolomics and proteomics analysis, including packages like `igraph` [@Csardi2006], `MOFA` [@Argelaguet2018], and `decoupleR` [@BadiaIMompel2002].
+Networks provide an intuitive and powerful framework to study metabolomics and proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, shared pathways) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase R's extensive ecosystem for metabolomics and proteomics analysis, including packages like `igraph` [@Csardi2006], `MOFA` [@Argelaguet2018], and `decoupleR` [@BadiaIMompel2022].
 
 For this chapter, we will use the terms knowledge networks and experimental networks [@Amara2022]. Knowledge networks are constructed using existing biochemical and biological information, helping to interpret metabolomics and proteomics data within the framework of known pathways. For instance, a metabolic network represents a knowledge network, where metabolites act as vertices and their biochemical conversions form the edges. In contrast, experimental networks are directly derived from metabolomics and proteomics data, linking metabolites and proteins based on observed relationships like correlation or, in case of MS/MS data, spectral similarity. Both types of networks can be explored using advanced statistical methods, graph analysis, and data-driven techniques to reveal meaningful patterns and connections within the dataset.
 
@@ -429,12 +429,14 @@ Tools, such as MatrixQCvis [@Naake2022] can be ideally used to explore data qual
 
 ## metabolomics
 assay(metabolomics) <- assay(metabolomics) |>
-    #normalizeAssay(method = "quantile division", probs = 0.5) |>
+    normalizeAssay(method = "quantile division", probs = 0.5,
+        multiplyByNormalizationValue = TRUE) |>
     transformAssay(method = "log")
 
 ## proteomics
 assay(proteomics) <- assay(proteomics) |>
-    #normalizeAssay(method = "quantile", probs = 0.5) |>
+    normalizeAssay(method = "quantile division", probs = 0.5, 
+        multiplyByNormalizationValue = TRUE) |>
     transformAssay(method = "log")
 ```
 
