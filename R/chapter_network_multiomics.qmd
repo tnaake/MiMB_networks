@@ -8,6 +8,7 @@ author:
     affiliation:
       - name: European Molecular Biology Laboratory, Meyerhofstrasse 1, 69117 Heidelberg, Germany
       - name: European Molecular Biology Laboratory, Notkestrasse 85, 22607 Hamburg, Germany
+bibliography: bibliography.bib
 format: docx
 ---
 
@@ -17,7 +18,7 @@ Metabolomics, the study of small molecules in biological systems, and proteomics
 
 keywords: Metabolomics, Proteomics, Processing, Quality control, Network analysis, Pathway, Knowledge graphs
 
-```{r}
+```{r load_library}
 #| message: false
 #| echo: false
 
@@ -92,9 +93,9 @@ library("vsn")
 # Introduction
 <!-- # Introduction to metabolomics and proteomics pathway and network analysis -->
 
-Networks provide an intuitive and powerful framework to study metabolomics and proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, shared pathways) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase R's extensive ecosystem for metabolomics and proteomics analysis, including packages like `igraph`, `MOFA`, and `decoupler`.
+Networks provide an intuitive and powerful framework to study metabolomics and proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, shared pathways) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase R's extensive ecosystem for metabolomics and proteomics analysis, including packages like `igraph` [@Csardi2006], `MOFA` [@Argelaguet2018], and `decoupleR` [@BadiaIMompel2002].
 
-For this chapter, we will use the terms knowledge networks and experimental networks. Knowledge networks are constructed using existing biochemical and biological information, helping to interpret metabolomics and proteomics data within the framework of known pathways. For instance, a metabolic network represents a knowledge network, where metabolites act as vertices and their biochemical conversions form the edges. In contrast, experimental networks are directly derived from metabolomics and proteomics data, linking metabolites and proteins based on observed relationships like correlation or, in case of MS/MS data, spectral similarity. Both types of networks can be explored using advanced statistical methods, graph analysis, and data-driven techniques to reveal meaningful patterns and connections within the dataset.
+For this chapter, we will use the terms knowledge networks and experimental networks [@Amara2022]. Knowledge networks are constructed using existing biochemical and biological information, helping to interpret metabolomics and proteomics data within the framework of known pathways. For instance, a metabolic network represents a knowledge network, where metabolites act as vertices and their biochemical conversions form the edges. In contrast, experimental networks are directly derived from metabolomics and proteomics data, linking metabolites and proteins based on observed relationships like correlation or, in case of MS/MS data, spectral similarity. Both types of networks can be explored using advanced statistical methods, graph analysis, and data-driven techniques to reveal meaningful patterns and connections within the dataset.
 
 # Materials
 
@@ -112,7 +113,7 @@ Preprocessing and quality assessment and quality control (QA/QC) are critical to
 
 1.  Load the proteomics and metabolomics data sets via import functions from `MatrixQCvisUtils` (available via www.github.com/tnaake/MatrixQCvisUtils). Importing the XLSX sheets into R via the `MatrixQCvisUtils` package, creates `SummarizedExperiment` (@Morgan2024) objects, popular data formats within the R/Bioconductor framework. The `SummarizedExperiment` class stores the measured data (available via `assay`), next to the metadata associated to the samples (available via `colData`) and features (available via `rowData`).
 
-```{r}
+```{r processing_load}
 ## load metabolomics data
 metabolomics <- biocrates("../data/12014_2024_9501_MOESM4_ESM.xlsx", 
     sheet = 1, colNames = FALSE)
@@ -131,7 +132,7 @@ proteomics <- maxquant(file = "../data/12014_2024_9501_MOESM3_ESM.xlsx",
     -   complete and correctly formatted metadata associated to each data set
 3.  (optional) Depending on 2., identify the nature of missing features, harmonize sample names, correct feature names, harmonize metadata and check for completeness.
 
-```{r}
+```{r processing_harmonize}
 #| echo: false
 #| results: false
 ## Loading the data from the supplemental material from @Gegner2024, the
@@ -226,7 +227,7 @@ proteomics <- proteomics[, colnames(metabolomics)]
 
 4.  (optional) Identify additional metadata, for example clinical parameters or translated IDs for metabolites (e.g. HMDB, KEGG, ChEBI ids) and proteins (e.g. Entrez, SYMBOL, Uniprot ids), from other sources. Add the metadata to the respective slots of the `SummarizedExperiment` object (`rowData` for features, `colData` for samples).
 
-```{r}
+```{r processing_add_metadata}
 #| message: false
 #| echo: false
 ## For this data set, additional metadata on clinical parameters are
@@ -286,7 +287,7 @@ Each data set comes typically with information on the reliability of features. T
 
 1.  Remove low or high abundance features. Low intensity features may be due to noise or below the limit of detection or quantification. High intensity may be above the limit of quantification, the linear dynamic range, or the calibration range. Removing these features prevents artifacts in downstream statistical analyses. For the targeted metabolomics data set, ensure that the data set only includes high-quality metabolite measurements. The MetIDQ output provides assessment of the quality of each measurement, encoded by a color code of each cell (dark blue: \< LOD (Limit of Detection; 3x signal to noise); light blue: \< LLOQ (Lower Limit of Quantification; 10x signal to noise) or \> ULOQ (Upper Limit of Quantification); green: valid; Yellow: Internal Standard out of range). Remove the low-quality features that do not meet the defined quantification criteria (`choice of user`). In this case, we will retain only those metabolites where at least 50% of the measurements fall within the quantification limits (valid). This filtering step ensures that the data set primarily consists of reliable data points minimizing the impact of imprecise measurements.
 
-```{r}
+```{r processing_qc_metidq}
 source("utils.R")
 valid_features <- metIDQ_get_high_quality_features(
     file = "../data/12014_2024_9501_MOESM4_ESM.xlsx", threshold = 0.5)
@@ -295,7 +296,7 @@ metabolomics <- metabolomics[valid_features, ]
 
 2.  (optional) Remove those features that are only detected in a subset of samples (`choice of user`). High levels of missing data (`NA` values can reduce statistical power, and while imputation techniques can be applied, imputation of excessive number of missing values per feature lead to unreliable results. Additionally, features identified in only a few biological replicates may lack reproducibility, impacting downstream analyses. Filtering criteria can be set on a global level, such as removing features absent in more than 50% of the samples, or based on metadata of the data set, such as removing features detected in fewer than two biological replicates per condition. More stringent thresholds, such as requiring detection in at least 50% of replicates within each condition, can further improve dataset reliability. The choice of filtering thresholds should be guided by domain-specific knowledge and dataset's characteristics. Overly strict filtering may remove biologically relevant proteins that are present only in specific subsets of samples, such as particular cell lines or patient groups. Filtering strategies should be carefully considered to maintain a balance between data quality and the the retention of meaningful biological information.
 
-```{r}
+```{r processing_qc_proteomics_remove_low_number_features}
 ## we will remove the features that are detected in less than ten samples 
 valid_features <- apply(assay(proteomics), MARGIN = 1, FUN = function(rows_i) !(sum(!is.na(rows_i)) < 10))
 proteomics <- proteomics[valid_features, ]
@@ -305,7 +306,7 @@ proteomics <- proteomics[valid_features, ]
 
 4.  Remove features with a standard deviation of 0 as these features do not contain information for biological interpretation.
 
-```{r}
+```{r processing_qc_sd}
 ## metabolomics
 valid_features <- apply(assay(metabolomics), MARGIN = 1, sd, na.rm = TRUE) > 0
 metabolomics <- metabolomics[valid_features, ]
@@ -315,9 +316,9 @@ valid_features <- apply(assay(proteomics), MARGIN = 1, sd, na.rm = TRUE) > 0
 proteomics <- proteomics[valid_features, ]
 ```
 
-5.  For proteomics data, ensure that the data set only includes high-quality protein measurements. In the proteomics dataset generated by MaxQuant [@cite here], peptide counts serve as an indicator of the reliability of protein identification. To ensure data quality, we will filter out proteins identified with low confidence (`choice of user`. In this case, we will remove any protein that has fewer than two peptides supporting its identification. This approach helps retain only well-supported protein identifications, enhancing the robustness of downstream analyses.
+5.  For proteomics data, ensure that the data set only includes high-quality protein measurements. In the proteomics dataset generated by MaxQuant [@Cox2008], peptide counts serve as an indicator of the reliability of protein identification. To ensure data quality, we will filter out proteins identified with low confidence (`choice of user`. In this case, we will remove any protein that has fewer than two peptides supporting its identification. This approach helps retain only well-supported protein identifications, enhancing the robustness of downstream analyses.
 
-```{r}
+```{r processing_qc_peptide_counts}
 valid_features <- lapply(
     strsplit(rowData(proteomics)$peptide_counts_all, split = ";"), 
     function(i) max(as.numeric(i)) >= 2) |> 
@@ -330,7 +331,7 @@ proteomics <- proteomics[valid_features, ]
 
 7.  For the proteomics data set, remove the features with reverse sequences as they do not correspond to real biological proteins. Reverse sequences refer to decoy sequences generated by reversing the amino acid sequence of real proteins. Reverse sequences are commonly used as negative controls in target-decoy strategies for false discovery rate estimation in mass-spectrometry-based proteomics.
 
-```{r}
+```{r processing_qc_reverse}
 valid_features <- rowData(proteomics)$reverse != "+" 
 valid_features[is.na(valid_features)] <- TRUE
 proteomics <- proteomics[valid_features, ]
@@ -355,7 +356,7 @@ The `MatrixQCvis` package [@Naake2022] performs QA/QC on `SummarizedExperiment` 
 
 The Figure \ref{fig:qc} shows some visualizations of `shinyQC` applied on the proteomics data set.
 
-```{r, fig.show="hide"}
+```{r processing_qc_matrixqcvis_prepare_plots, fig.show="hide"}
 #| message: false
 #| echo: false
 ## A: meanSdPlot of raw values
@@ -401,7 +402,7 @@ gg_dist_log <- distSample(d, proteomics, label = "tissue",
     as.ggplot()
 ```
 
-```{r}
+```{r processing_qc_matrixqcvis_final_plot}
 plot_grid(gg_meanSd, gg_meanSd_log, gg_pca, gg_pca_log, gg_dist, gg_dist_log,
     
     ncol = 2, labels = "AUTO")
@@ -409,7 +410,7 @@ plot_grid(gg_meanSd, gg_meanSd_log, gg_pca, gg_pca_log, gg_dist, gg_dist_log,
 
 ### Normalization, batch correction, transformation, missing value imputation
 
-Tools, such as MatrixQCvis (@Naake2022) can be ideally used to explore data quality interactively and optimize choice of batch correction, normalization, or transformation methods. The `MatrixQCvis` package offers utility functions to perform normalization, batch reduction, transformation and imputation using a variety of methods (`normalizeAssay`, `batchCorrectionAssay`, `transformAssay`, `imputeAssay`).
+Tools, such as MatrixQCvis [@Naake2022] can be ideally used to explore data quality interactively and optimize choice of batch correction, normalization, or transformation methods. The `MatrixQCvis` package offers utility functions to perform normalization, batch reduction, transformation and imputation using a variety of methods (`normalizeAssay`, `batchCorrectionAssay`, `transformAssay`, `imputeAssay`).
 
 1.  (optional) Normalize the data set. Normalization adjusts for technical variability and ensures comparability of metabolite and protein levels across samples. The choice of method depends on the dataset’s variability and experimental design. Common methods are median normalization, quantile division normalization (division by a given quantile per sample, e.g. 50% for median division), sum normalization (division by )
 2.  (optional) Correct for batches. Batch effect correction is typically essential in multi-batch experiments acquired over a longer time, but may be not needed in smaller scale experiments. `ComBat`, for instance, requires specifying batch labels and optionally including covariates to retain biological variability. In case of linear efects of batches the batch effect can be removed via `limma`'s `removeBatchEffect` function and specifying the batch labels.
@@ -417,7 +418,7 @@ Tools, such as MatrixQCvis (@Naake2022) can be ideally used to explore data qual
 4.  (optional) Scale the features. Scaling standardizes the magnitude of metabolite intensities.
 5.  (optional) Impute the missing values of the data sets. Metabolomics and proteomics data acquired by mass spectrometry typically contain missing values. The choice of the imputation method depends on the mechanism of missingness (e.g., missing completely at random, missing at random, missing not at random). Various imputation techniques are available in `MatrixQCvis`, such as k-nearest neighbors imputation or imputation by minimum values. For a more in-depth discussion on imputation methods in metabolomics, refer to https://www.nature.com/articles/s41598-017-19120-0, and for proteomics, see https://pubmed.ncbi.nlm.nih.gov/26906401/. Generally, missing values should be imputed with caution, as doing so requires assuming a model of missingness and will introduce fabricated data. In many cases, downstream analyses can tolerate a certain level of missingness without significant impact on results. Tools such as limma and MOFA are designed to handle datasets with incomplete observations, making imputation unnecessary for many applications.
 
-```{r}
+```{r processing_normalization}
 #| eval: true
 #| message: false
 #| warning: false
@@ -439,13 +440,13 @@ assay(proteomics) <- assay(proteomics) |>
 
 ## Multi-omics integration using MOFA
 
-MOFA (Multi-Omics Factor Analysis, @Argelaguet2019) integrates omics modalities using a factor analysis to uncover latent factors that explain the shared variation across different datasets. Proper data wrangling and preprocessing as discussed in previous sections (e.g., normalization, transformation) are critical steps in ensuring the reliability and interpretability of the results.
+MOFA (Multi-Omics Factor Analysis, @Argelaguet2018) integrates omics modalities using a factor analysis to uncover latent factors that explain the shared variation across different datasets. Proper data wrangling and preprocessing as discussed in previous sections (e.g., normalization, transformation) are critical steps in ensuring the reliability and interpretability of the results.
 
 ### Model building
 
 1.  Define the modalities (omics data types) to be included in the model. Make sure that the modalities are properly normalized and transformed. (optional) Define group information. Groups refer to the different subsets or categories within the data that can be used to model variation across multiple omics layers.
 
-```{r}
+```{r mofa_create_mofa}
 #| eval: true
 #| message: false
 #| warning: false
@@ -462,7 +463,7 @@ MOFAobject <- create_mofa(
 
 3.  Add the model parameters to the untrained MOFA model and initiate the training of the model.
 
-```{r}
+```{r mofa_run_mofa}
 #| eval: true
 #| message: true
 #| warning: true 
@@ -560,7 +561,7 @@ apply(.var, MARGIN = 1,
 
 1.  Define covariates and cofactors and add to metadata.
 
-```{r add_covariates}
+```{r mofa_add_covariates}
 #| eval: true
 #| message: false
 #| warning: false
@@ -637,7 +638,7 @@ gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
 
 4.  Analyse the weights of the factors. The weights represent how strongly each feature is associated with each factor. Features with little or no association to a factor will have values near zero, while those with a strong association will exhibit large absolute values. The sign of the weight indicates the direction of the effect: a positive weight means the feature has higher lievels in samples with positive factor values, while a negative weight indicates higher levels in samples with negative factor values.
 
-```{r}
+```{r mofa_plot_top_weights}
 #| eval: true
 #| message: false
 #| warning: false
@@ -653,7 +654,7 @@ plot_top_weights(MOFAobject,
 
 5.  Analyse the feature intensities across samples and relationships between features using the information from the MOFA model. The visualizations are helpful for identifying patterns clusters, assessing data quality and batch effects, detecting potential outliers, and understanding how different features, factors, or sample groups contribute to the overall variation in the dataset. The visualizations should be created for each factor of interest and for the most important (e.g. top 10 or 20) features per factor (`choice of user`).
 
-```{r}
+```{r mofa_plot_data_heatmap}
 #| eval: true
 #| message: false
 #| warning: false
@@ -748,9 +749,9 @@ We will showcase the creation of statistical networks based on the implemented f
 - *Partial Spearman Correlation* is similiar to partial Pearson correlation but for rank-based dependencies. The algorithm controls for confounding variables while dealing with non-linear relationships. It handles non-linearity and indirect interactions. It is less widely used in regulatory network inference and may be computationally demanding.
 - *Bayesian Network*  Use case: Infers GRNs by modeling conditional dependencies between genes using a probabilistic graphical model. When to use: When prior biological knowledge is available and probabilistic modeling is needed. Advantages: Handles noise well, allows for causal inference, and accommodates missing data. Disadvantages: Computationally expensive, requires strong prior assumptions, sensitive to sample size.
 
-2.  Calculate the adjacency matrix using the `MetNet` [@Naake2017]. Specify the algorithms to be run. (optional) Prior to running the model, check if the model tolerates missing values (`NA`) and impute values if needed. (optional) Apply the Benjamini-Hochberg method for p-value adjustment for Pearson and Spearman correlation. The result of each algorithm is stored in a respective assay of the `AdjacencyMatrix` object, an extension of the `SummarizedExperiment` class. Note, that depending on the chosen algorithm, the adjacency matrices are not necessarily symmetric.
+2.  Calculate the adjacency matrix using the `MetNet` [@Naake2019]. Specify the algorithms to be run. (optional) Prior to running the model, check if the model tolerates missing values (`NA`) and impute values if needed. (optional) Apply the Benjamini-Hochberg method for p-value adjustment for Pearson and Spearman correlation. The result of each algorithm is stored in a respective assay of the `AdjacencyMatrix` object, an extension of the `SummarizedExperiment` class. Note, that depending on the chosen algorithm, the adjacency matrices are not necessarily symmetric.
 
-```{r}
+```{r network_statistical}
 stat_adj <- imputeAssay(assay(metabolomics), "MinDet") |>
     statistical(model = c("pearson", "spearman", "randomForest"), 
         p.adjust = "BH")
@@ -762,7 +763,7 @@ stat_adj <- imputeAssay(assay(metabolomics), "MinDet") |>
     coefficients will be regarded as noise and removed from the adjacency 
     matrix. 
 
-```{r}
+```{r network_threshold}
 args_thr <- list(filter = "pearson_coef > 0.8 & pearson_pvalue < 0.05")
 stat_adj_thr <- threshold(am = stat_adj, type = "threshold", args = args_thr)
 
@@ -770,14 +771,14 @@ stat_adj_thr <- threshold(am = stat_adj, type = "threshold", args = args_thr)
 
 4.  Create a graph from the consensus adjacency matrix.
 
-```{r}
+```{r network_graph}
 g <- graph_from_adjacency_matrix(assay(stat_adj_thr, "consensus"), 
     weighted = FALSE, mode = "directed")
 ```
 
 6.  (optional) Remove the singleton components and obtain the induced subgraph.
 
-```{r}
+```{r network_graph_filtering}
 components_g <- igraph::components(g)
 components_keep <- which(components_g$csize > 1)
 V_keep <- names(components_g$membership)[
@@ -787,7 +788,7 @@ g_keep <- induced_subgraph(g, V_keep)
 
 5.  Visualize network. Results from upstream analyses can be mapped to the network. As an example, the weights of latent factor 1 of the trained MOFA model can be used for colouring of the network vertices. Alternatively, we can use logFC of the differential expression analysis.
 
-```{r}
+```{r network_visualisation}
 #| eval: false
 attributes_df <- get_weights(MOFAobject)$metabolomics |>
     as.data.frame() 
@@ -846,7 +847,7 @@ Table: **Compatibility of community detection algorithms with network properties
 
 <!-- : Compatibility of community detection algorithms with network properties {#tbl-community_detection, tbl-colwidths="[28, 17, 17, 21, 17]"} -->
 
-```{r}
+```{r network_cluster}
 community <- cluster_optimal(g_keep, weights = E(g_keep))
 ```
 
@@ -869,6 +870,5 @@ This chapter demonstrated how to perform metabolomics data analysis in R using a
 
 # References
 
-Morgan M, Obenchain V, Hester J, Pagès H (2024). SummarizedExperiment: A container (S4 class) for matrix-like assays. doi:10.18129/B9.bioc.SummarizedExperiment, R package version 1.37.0, https://bioconductor.org/packages/SummarizedExperiment.
 
 # Figure Captions/Table Captions/Tables
