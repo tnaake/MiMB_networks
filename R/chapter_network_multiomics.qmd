@@ -383,7 +383,7 @@ The *MatrixQCvis* package [@Naake2022] performs QA/QC on *SummarizedExperiment* 
 1.  Start the application via *shinyQC(metabolomics)* and *shinyQC(proteomics)*.
 2.  Check the number of measured and missing values per sample and per feature. The metric informs about the dynamic range of the acquisition. Differences between samples of an experiment may indicate differences in the dynamic range and/or in the sample content.
 3.  Check the distribution of measurements per sample. The metric informs about the dynamic range of the acquisition. Differences between samples of an experiment may indicate differences in the dynamic range and/or in the sample content.
-4.  Examine the Mean-sd plot. The metric informs about the level of homoskedasticity of the dataset. Homoscedasticity is an assumption of parametric tests, e.g. t-tests. In case of sd-mean independence, the running median should be approximately horizontal.
+4.  Examine the mean-sd plot. The metric informs about the level of homoskedasticity of the dataset. Homoscedasticity is an assumption of parametric tests, e.g. t-tests. In case of sd-mean independence, the running median should be approximately horizontal.
 5.  Examine the MA plots and Hoeffding's D statistic plot. The metric informs about systematic biases and variability in the data by taking into account the log2-fold change between two conditions (*M = log2(I_i) - log2(I_j)*) and the mean expression of two conditions (*A = 1/2 (log2(I_i) + log2(I_j))*), where *I_i* can be the intensity from one sample i and *I_j* the averaged intensities from a set of samples excluding sample *i*. Hoeffding's D is a measure of the distance between *F(A, M)* and *G(A)H(M)*, where *F(A, M)* is the joint cumulative distribution function (CDF) of *A* and *M*, and *G* and *H* are marginal CDFs. The higher the value of D, the more dependent are *A* and *M*.
 6.  Examine the empirical cumulative distribution function (ECDF) plots. The metric informs about the distribution, skewness of a sample and helps to identify outliers.
 7.  Examine the distance matrix between samples. The metric informs how similar or different samples are from one another based on the measured values. It informs about relationships and consistency between samples of the same group (e.g. treatment vs. control). The metric also helps to detect outliers in a dataset and to identify batch effects.
@@ -391,7 +391,7 @@ The *MatrixQCvis* package [@Naake2022] performs QA/QC on *SummarizedExperiment* 
 9.  Remove any samples or features that are outliers. Repeat the steps 1.-8.
 10. Identify the suitable normalization, batch correction, transformation, and imputation methods for the datasets by checking the metrics 3.-9.
 
-The Figure \ref{fig:qc} shows some visualizations of *shinyQC* applied on the proteomics dataset.
+The Figure 1 shows some visualizations of *shinyQC* applied on the proteomics dataset.
 
 ```{r processing_qc_matrixqcvis_prepare_plots, fig.show="hide"}
 #| eval: true
@@ -412,8 +412,10 @@ pca <- assay(proteomics) |>
     imputeAssay(method = "MinDet") |>
     dimensionReduction(type = "PCA", 
         params = list(center = TRUE, scale = TRUE))
+explainedVar <- explVar(pca[[2]], type = "PCA")
 gg_pca <- dimensionReductionPlot(tbl = pca[[1]], se = proteomics, 
-    color = "tissue", x_coord = "PC1", y_coord = "PC2", interactive = FALSE) +
+    color = "tissue", x_coord = "PC1", y_coord = "PC2", interactive = FALSE,
+    explainedVar = explainedVar) +
     guides(color = guide_legend(title = "tissue"))
 
 ## D: PCA of imputed raw values
@@ -422,8 +424,10 @@ pca <- assay(proteomics) |>
     imputeAssay(method = "MinDet") |>
     dimensionReduction(type = "PCA", 
         params = list(center = TRUE, scale = TRUE))
+explainedVar <- explVar(pca[[2]], type = "PCA")
 gg_pca_log <- dimensionReductionPlot(tbl = pca[[1]], se = proteomics, 
-    color = "tissue", x_coord = "PC1", y_coord = "PC2", interactive = FALSE) +
+    color = "tissue", x_coord = "PC1", y_coord = "PC2", interactive = FALSE,
+    explainedVar = explainedVar) +
     guides(color = guide_legend(title = "tissue"))
 
 ## E: distance matrix of raw values
@@ -442,14 +446,15 @@ gg_dist_log <- distSample(d, proteomics, label = "tissue",
     as.ggplot()
 ```
 
-```{r processing_qc_matrixqcvis_final_plot}
+```{r figure_1}
 #| eval: true
 #| echo: false
 #| message: false
 #| warning: false
 #| results: false
-plot_grid(gg_meanSd, gg_meanSd_log, gg_pca, gg_pca_log, gg_dist, gg_dist_log,
-    ncol = 2, labels = "AUTO")
+g <- plot_grid(gg_meanSd, gg_meanSd_log, gg_pca, gg_pca_log, gg_dist, 
+    gg_dist_log, ncol = 2, labels = "AUTO")
+ggsave(filename = "figure/figure1.jpg", plot = g, device = "jpg", dpi = 600)
 ```
 
 ### Normalization, batch correction, transformation, missing value imputation
@@ -458,7 +463,7 @@ Tools, such as MatrixQCvis [@Naake2022] can be ideally used to explore data qual
 
 1.  (optional) Normalize the dataset. Normalization adjusts for technical variability and ensures comparability of metabolite and protein levels across samples. The choice of method depends on the dataset’s variability and experimental design. Common methods are median normalization, quantile division normalization (division by a given quantile per sample, e.g. 50% for median division), sum normalization (division by the sum of intensities per column).
 2.  (optional) Correct for batches. Batch effect correction is typically essential in multi-batch experiments acquired over a longer time, but may be not needed in smaller scale experiments. *ComBat*, for instance, requires specifying batch labels and optionally including covariates to retain biological variability. In case of linear efects of batches the batch effect can be removed via *limma*'s *removeBatchEffect* function and specifying the batch labels.
-3.  Transform the dataset. For example, *log* transformation is commonly used to reduce skewness and heteroskedascity, other methods, such as *log2*, *log10*, variance stabilizing normalization (vsn) can be applied as well. The Mean-Sd plot may be used to assess the effect of transformation on homoskedasticity.
+3.  Transform the dataset. For example, *log* transformation is commonly used to reduce skewness and heteroskedasticity, other methods, such as *log2*, *log10*, variance stabilizing normalization (vsn) can be applied as well. The mean-sd plot may be used to assess the effect of transformation on homoskedasticity.
 4.  (optional) Scale the features. Scaling standardizes the magnitude of metabolite intensities.
 5.  (optional) Impute the missing values (**NA**) of the datasets. Metabolomics and proteomics data acquired by mass spectrometry typically contain missing values. The choice of the imputation method depends on the mechanism of missingness (e.g., missing completely at random, missing at random, missing not at random). Various imputation techniques are available in *MatrixQCvis*, such as k-nearest neighbors imputation or imputation by minimum values. For a more in-depth discussion on imputation methods in metabolomics, refer to @Wei2018, and for proteomics, see @Lazar2016. Generally, missing values should be imputed with caution, as doing so requires assuming a model of missingness and will introduce fabricated data. In many cases, downstream analyses can tolerate a certain level of missing values without significant impact on results. Tools such as *limma* and *MOFA* are designed to handle datasets with incomplete observations, making imputation unnecessary for many applications.
 
@@ -470,18 +475,18 @@ Tools, such as MatrixQCvis [@Naake2022] can be ideally used to explore data qual
 #| results: false
 ## In the case of the lung cancer adenocarcinoma dataset,
 ## we will apply quantile division normalization and log transformation to control
-## for heteroskedascity
+## for heteroskedasticity
 
 ## metabolomics
 assay(metabolomics) <- assay(metabolomics) |>
-    normalizeAssay(method = "quantile division", probs = 0.5,
-        multiplyByNormalizationValue = TRUE) |>
+    #normalizeAssay(method = "quantile division", probs = 0.5,
+    #    multiplyByNormalizationValue = TRUE) |>
     transformAssay(method = "log")
 
 ## proteomics
 assay(proteomics) <- assay(proteomics) |>
-    normalizeAssay(method = "quantile division", probs = 0.5, 
-        multiplyByNormalizationValue = TRUE) |>
+    #normalizeAssay(method = "quantile division", probs = 0.5, 
+    #    multiplyByNormalizationValue = TRUE) |>
     transformAssay(method = "log")
 ```
 
@@ -551,7 +556,7 @@ MOFAobject <- run_mofa(MOFAobject,
     use_basilisk = FALSE)
 ```
 
-4.  Inspect the sanity of the model output. Plot data overview and verify that the dimensions for each dataset are as expected Calculate the correlation scores between the factors. The correlation coefficients between the factors should be low, indicating that each factor captures distinct variation in the data.
+4.  Inspect the sanity of the model output. Plot data overview and verify that the dimensions for each dataset are as expected Calculate the correlation scores between the factors. The correlation coefficients between the factors should be low, indicating that each factor captures distinct variation in the data. In case of too many correlated factors, the number of trained factors can be reduced to make the interpretation of the model easier.
 
 ```{r mofa_data_overview}
 #| eval: true
@@ -559,6 +564,7 @@ MOFAobject <- run_mofa(MOFAobject,
 #| message: false
 #| warning: false
 #| results: false
+#| fig-show: hide
 ## plot data overview
 plot_data_overview(MOFAobject)
 ```
@@ -570,7 +576,16 @@ plot_data_overview(MOFAobject)
 #| warning: false
 #| results: false
 ## sanity check: correlation between factors
-plot_factor_cor(MOFAobject)
+png("figure/figure2_tmp.png", width = 1500, height = 1500, res = 300)
+plot_factor_cor(object = MOFAobject, method = "pearson")
+dev.off()
+
+img <- png::readPNG("figure/figure2_tmp.png")
+g <- grid::rasterGrob(img, interpolate = TRUE)
+
+gg_cor <- ggplot() +
+  annotation_custom(g, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+  theme_void()
 ```
 
 5.  Examine explained variance of the factors and per modality. The analysis shows the proportion of variance explained by each latent factor across different views (modalities) and groups (if applicable). Higher variance explained per factor means that the factor captures a significant portion of the variation in that particular view. If the first few factors explain most of the variance, it suggests that only a subset of factors drive the structure in the data. If certain factors explain more variance in one view compared to another, it suggests that the factor is more specific to that modality. Co-variance in most factors indicates a strong relationship between the data types. If plotted separately, differences in variance explained between groups may indicate distinct biological patterns or variation in data structure across conditions.
@@ -581,15 +596,18 @@ plot_factor_cor(MOFAobject)
 #| message: false
 #| warning: false
 #| results: false
+#| fig-show: hide
 ## plot explained variance
-plot_variance_explained(MOFAobject, x = "view", y = "factor", 
-    plot_total = FALSE)
+gg_variance <- plot_variance_explained(MOFAobject, x = "view", y = "factor", 
+    plot_total = FALSE) |>
+    as.ggplot()
 
 ## plot variance explained per data modality.
 plot_variance_explained(MOFAobject, x = "view", y = "factor",
     plot_total = TRUE)[[2]]
 
-## The activity is defined by a contribution of \>=30% variance explained
+## Alternatively: Create a plot where the "activity" is shown.
+## The activity is defined by a contribution of e.g. \>=30% variance explained
 ## in each layer per data modality, e.g. if a modality explains 28%
 ## variance of Factor1, then it will be set to inactive.
 ## plot active/inactive per data modality
@@ -637,12 +655,23 @@ MOFAobject@samples_metadata <- dplyr::left_join(
 #| message: false
 #| warning: false
 #| results: false
-## major covariates
+#| fig-show: hide
+## correlation with covariates
+png("figure/figure2_tmp.png", width = 1500, height = 1500, res = 300)
 correlate_factors_with_covariates(MOFAobject, 
     covariates = c("tissue", "patient_ID", "age_at_diagnosis",
         "sex", "pstage", "ECOG", "smoking_status", "pack_years",
         "recurrence"), 
     plot = "r")
+dev.off()
+img <- png::readPNG("figure/figure2_tmp.png")
+g <- grid::rasterGrob(img, interpolate = TRUE)
+
+gg_cor_metadata <- ggplot() +
+  annotation_custom(g, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+  theme_void()
+
+## p-values of correlation with covariates
 correlate_factors_with_covariates(MOFAobject, 
     covariates = c("tissue", "patient_ID", "age_at_diagnosis",
         "sex", "pstage", "ECOG", "smoking_status", "pack_years",
@@ -658,6 +687,7 @@ correlate_factors_with_covariates(MOFAobject,
 #| message: false
 #| warning: false
 #| results: false
+#| fig-show: hide
 allFactors <- get_factors(MOFAobject, factors = "all", as.data.frame = TRUE) |>
     tibble::as_tibble() |>
     dplyr::mutate(factor = gsub("Factor","F", factor))
@@ -678,7 +708,18 @@ gg_factor1_factor2 <- ggplot(plotTab, aes(x = F1, y = F2)) +
     geom_point(aes(color = sex), size = 2) +
     guides(color = guide_legend(ncol = 2)) +
     xlab("Factor 1") + ylab("Factor 2") +
-    theme_bw() 
+    theme_bw()
+gg_factor1_factor2_simplified <- 
+    ggplot(plotTab, aes(x = F1, y = F2)) +
+    geom_point(aes(x = F1, y = F2, color = tissue),
+        stroke = 2, size = 4) +
+    #scale_shape_manual(values = c(TU = 21, NAT = 22)) +
+    #guides(color = guide_legend(ncol = 2)) +
+    ggnewscale::new_scale_colour() +
+    geom_point(aes(color = sex), size = 2) +
+    guides(color = guide_legend(ncol = 2)) +
+    xlab("Factor 1") + ylab("Factor 2") +
+    theme_bw()
 
 ## Factor 1 and 3
 gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
@@ -700,7 +741,8 @@ gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
 #| message: false
 #| warning: false
 #| results: false
-plot_top_weights(MOFAobject,
+#| fig-show: hide
+gg_top_weights <- plot_top_weights(MOFAobject,
   view = "metabolomics",
   factor = 1,
   nfeatures = 10,     # Number of features to highlight
@@ -717,14 +759,34 @@ plot_top_weights(MOFAobject,
 #| message: false
 #| warning: false
 #| results: false
-plot_data_heatmap(MOFAobject, view = "metabolomics", factor = 1, features = 10,
+#| fig-show: hide
+gg_heatmap <- plot_data_heatmap(MOFAobject, view = "metabolomics", 
+    factor = 1, features = 10,
     ## extra arguments that are passed to the `pheatmap` function
     cluster_rows = TRUE, cluster_cols = FALSE, show_rownames = TRUE, 
-    show_colnames = TRUE)
+    show_colnames = TRUE) |>
+    as.ggplot()
 
 plot_data_scatter(MOFAobject, view = "metabolomics", factor = 1, features = 10, 
     add_lm = TRUE, color_by = "tissue")
 ```
+
+
+```{r figure_2}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
+#| fig-show: hide
+g <- plot_grid(gg_cor, gg_variance, gg_cor_metadata, gg_factor1_factor2, 
+    gg_top_weights, gg_heatmap,
+    ncol = 2, labels = "AUTO")
+ggsave(filename = "figure/figure2.jpg", plot = g, device = "jpg", dpi = 800, 
+       height = 10, width = 6)
+```
+
+Figure 2 shows ...
 
 ## Differential Expression Analysis
 
@@ -978,3 +1040,14 @@ This chapter demonstrated how to perform metabolomics data analysis in *R* using
 
 
 # Figure Captions/Table Captions/Tables
+
+
+Figure 1: Assessment of log-transformation of proteomics dataset on quality metrics.
+A: Mean-sd plot of raw data. B: Mean-sd plot of transformed data. 
+Log-transformation controls heteroskedasticity.
+B: PCA of raw data. C: PCA of transformed data. Log-transformation increases
+variation on prinpical component 1 and 2.
+E: Matrix of Euclidean distances between samples of raw data. 
+F: Matrix of Euclidean distances between samples of transformed data.
+
+Figure 2:
