@@ -14,7 +14,7 @@ format: docx
 
 <!-- revise abstract -->
 
-Metabolomics, the study of small molecules in biological systems, and proteomics, the study of proteins in biological systems, have become powerful tools for understanding biochemical pathways, discovering biomarkers, and elucidating disease mechanisms. This chapter provides a guide to performing metabolomics and proteomics data analysis in *R* using pathway and network approaches. It covers essential steps, including data preprocessing, quality control (QC), differential expression analysis, multi-omics factor analysis (MOFA), correlation analysis, and pathway analysis. 
+Metabolomics, the study of small molecules in biological systems, and proteomics, the study of proteins in biological systems, have become powerful tools for understanding biochemical pathways, discovering biomarkers, and elucidating disease mechanisms. This chapter provides a guide to performing metabolomics and proteomics data analysis in *R*,  focusing on pathway and network-based approaches. It covers essential steps in data processing, quality control (QC), differential expression analysis, multi-omics factor analysis (MOFA), statistical network analysis, and pathway analysis using prior knowledge. The methods outlined provide a framework for biomarker discovery and advancing systems-level understanding of disease processes using metabolomics and proteomics datasets.
 
 keywords: Metabolomics, Proteomics, Processing, Quality control, Network analysis, Pathway, Knowledge graphs
 
@@ -53,6 +53,11 @@ library("ggplotify")
 if (!require("igraph", quietly = TRUE))
     BiocManager::install("igraph")
 library("igraph")
+
+## magick
+if (!require("magick", quietly = TRUE))
+    BiocManager::install("magick")
+library("magick")
 
 ## MatrixQCvis
 if (!require("MatrixQCvis", quietly = TRUE))
@@ -93,7 +98,7 @@ library("vsn")
 # Introduction
 <!-- # Introduction to metabolomics and proteomics pathway and network analysis -->
 
-Networks provide a powerful framework to study metabolomics and proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, shared pathways) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase the statistical programming language R's extensive ecosystem for metabolomics, proteomics and network analysis analysis, including packages like *igraph* [@Csardi2006], *MOFA* [@Argelaguet2018], and *decoupleR* [@BadiaIMompel2022]. MOFA is a statistical technique to determine latent factors of shared variation in multi-omics datasets. We will use the results from the MOFA model to guide downstream analysis in pathway and network analysis.
+Networks provide a powerful framework to study metabolomics and proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, shared pathways) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase the statistical programming language R's extensive ecosystem for metabolomics, proteomics and network analysis analysis, including packages like *igraph* [@Csardi2006], *MOFA* [@Argelaguet2018], and *decoupleR* [@BadiaIMompel2022]. MOFA is a statistical technique to determine latent factors of shared variation in multi-omics datasets and is used to integrate multiple data modalities that share the same set of samples. We will use the results from the MOFA model to guide downstream analysis in pathway and network analysis.
 
 For this chapter, we will use the terms knowledge networks and experimental networks [@Amara2022]. Knowledge networks are constructed using existing biochemical and biological information, helping to interpret metabolomics and proteomics data within the framework of known pathways. For instance, a metabolic reaction network represents a knowledge network, where metabolites act as vertices and their biochemical conversions are the edges. In contrast, experimental networks are directly derived from metabolomics and proteomics data, linking metabolites and proteins based on observed relationships like correlation or, in case of MS/MS data, spectral similarity. Both types of networks can be explored using advanced statistical methods, graph analysis, and data-driven techniques to reveal meaningful patterns and connections within the dataset.
 
@@ -104,6 +109,7 @@ We will use the dataset from @Gegner2024 to showcase functionality in *R* to ana
 For space restrictions, the code for all analyses will not be displayed in this chapter and we refer the interested reader to check the complete and reproducible protocol available via www.github.com/tnaake/MiMB_networks/R/chapter_network_multiomics.qmd.
 
 # Methods
+
 
 ## Data preprocessing and quality assessment and quality control (QA/QC)
 
@@ -383,15 +389,13 @@ The *MatrixQCvis* package [@Naake2022] performs QA/QC on *SummarizedExperiment* 
 1.  Start the application via *shinyQC(metabolomics)* and *shinyQC(proteomics)*.
 2.  Check the number of measured and missing values per sample and per feature. The metric informs about the dynamic range of the acquisition. Differences between samples of an experiment may indicate differences in the dynamic range and/or in the sample content.
 3.  Check the distribution of measurements per sample. The metric informs about the dynamic range of the acquisition. Differences between samples of an experiment may indicate differences in the dynamic range and/or in the sample content.
-4.  Examine the mean-sd plot. The metric informs about the level of homoskedasticity of the dataset. Homoscedasticity is an assumption of parametric tests, e.g. t-tests. In case of sd-mean independence, the running median should be approximately horizontal.
+4.  Examine the mean-sd plot (Figure 1 A and B). The metric informs about the level of homoskedasticity of the dataset. Homoscedasticity is an assumption of parametric tests, e.g. t-tests. In case of sd-mean independence, the running median should be approximately horizontal.
 5.  Examine the MA plots and Hoeffding's D statistic plot. The metric informs about systematic biases and variability in the data by taking into account the log2-fold change between two conditions (*M = log2(I_i) - log2(I_j)*) and the mean expression of two conditions (*A = 1/2 (log2(I_i) + log2(I_j))*), where *I_i* can be the intensity from one sample i and *I_j* the averaged intensities from a set of samples excluding sample *i*. Hoeffding's D is a measure of the distance between *F(A, M)* and *G(A)H(M)*, where *F(A, M)* is the joint cumulative distribution function (CDF) of *A* and *M*, and *G* and *H* are marginal CDFs. The higher the value of D, the more dependent are *A* and *M*.
 6.  Examine the empirical cumulative distribution function (ECDF) plots. The metric informs about the distribution, skewness of a sample and helps to identify outliers.
-7.  Examine the distance matrix between samples. The metric informs how similar or different samples are from one another based on the measured values. It informs about relationships and consistency between samples of the same group (e.g. treatment vs. control). The metric also helps to detect outliers in a dataset and to identify batch effects.
-8.  Examine dimension reduction, e.g. principal component analysis (PCA) and loadings plot. PCA preserves the variance between data points and aids in exploring relationships between samples and features. PCA is helpful in identifying structure in the dataset and in detecting outliers.
+7.  Examine the distance matrix between samples (Figure 1 C and D). The metric informs how similar or different samples are from one another based on the measured values. It informs about relationships and consistency between samples of the same group (e.g. treatment vs. control). The metric also helps to detect outliers in a dataset and to identify batch effects.
+8.  Examine dimension reduction, e.g. principal component analysis (PCA, Figure 1 E and F) and loadings plot. PCA preserves the variance between data points and aids in exploring relationships between samples and features. PCA is helpful in identifying structure in the dataset and in detecting outliers.
 9.  Remove any samples or features that are outliers. Repeat the steps 1.-8.
 10. Identify the suitable normalization, batch correction, transformation, and imputation methods for the datasets by checking the metrics 3.-9.
-
-The Figure 1 shows some visualizations of *shinyQC* applied on the proteomics dataset.
 
 ```{r processing_qc_matrixqcvis_prepare_plots, fig.show="hide"}
 #| eval: true
@@ -452,8 +456,8 @@ gg_dist_log <- distSample(d, proteomics, label = "tissue",
 #| message: false
 #| warning: false
 #| results: false
-g <- plot_grid(gg_meanSd, gg_meanSd_log, gg_pca, gg_pca_log, gg_dist, 
-    gg_dist_log, ncol = 2, labels = "AUTO")
+g <- plot_grid(gg_meanSd, gg_meanSd_log, gg_dist, gg_dist_log, 
+    gg_pca, gg_pca_log, ncol = 2, labels = "AUTO")
 ggsave(filename = "figure/figure1.jpg", plot = g, device = "jpg", dpi = 600)
 ```
 
@@ -576,16 +580,16 @@ plot_data_overview(MOFAobject)
 #| warning: false
 #| results: false
 ## sanity check: correlation between factors
-png("figure/figure2_tmp.png", width = 1500, height = 1500, res = 300)
+png("figure/figure2_cor.png", width = 1500, height = 1500, res = 300)
 plot_factor_cor(object = MOFAobject, method = "pearson")
 dev.off()
 
-img <- png::readPNG("figure/figure2_tmp.png")
-g <- grid::rasterGrob(img, interpolate = TRUE)
+#img <- png::readPNG("figure/figure2_tmp.png")
+#g <- grid::rasterGrob(img, interpolate = TRUE)
 
-gg_cor <- ggplot() +
-  annotation_custom(g, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
-  theme_void()
+#gg_cor <- ggplot() +
+#  annotation_custom(g, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+#  theme_void()
 ```
 
 5.  Examine explained variance of the factors and per modality. The analysis shows the proportion of variance explained by each latent factor across different views (modalities) and groups (if applicable). Higher variance explained per factor means that the factor captures a significant portion of the variation in that particular view. If the first few factors explain most of the variance, it suggests that only a subset of factors drive the structure in the data. If certain factors explain more variance in one view compared to another, it suggests that the factor is more specific to that modality. Co-variance in most factors indicates a strong relationship between the data types. If plotted separately, differences in variance explained between groups may indicate distinct biological patterns or variation in data structure across conditions.
@@ -598,9 +602,11 @@ gg_cor <- ggplot() +
 #| results: false
 #| fig-show: hide
 ## plot explained variance
-gg_variance <- plot_variance_explained(MOFAobject, x = "view", y = "factor", 
-    plot_total = FALSE) |>
-    as.ggplot()
+png("figure/figure2_variance.png", width = 1500, height = 1500, res = 300)
+plot_variance_explained(MOFAobject, x = "view", y = "factor", 
+    plot_total = FALSE)## |>
+    ##as.ggplot()
+dev.off()
 
 ## plot variance explained per data modality.
 plot_variance_explained(MOFAobject, x = "view", y = "factor",
@@ -657,19 +663,19 @@ MOFAobject@samples_metadata <- dplyr::left_join(
 #| results: false
 #| fig-show: hide
 ## correlation with covariates
-png("figure/figure2_tmp.png", width = 1500, height = 1500, res = 300)
+png("figure/figure2_cor_metadata.png", width = 1500, height = 1500, res = 300)
 correlate_factors_with_covariates(MOFAobject, 
     covariates = c("tissue", "patient_ID", "age_at_diagnosis",
         "sex", "pstage", "ECOG", "smoking_status", "pack_years",
         "recurrence"), 
     plot = "r")
 dev.off()
-img <- png::readPNG("figure/figure2_tmp.png")
-g <- grid::rasterGrob(img, interpolate = TRUE)
+#img <- png::readPNG("figure/figure2_tmp.png")
+#g <- grid::rasterGrob(img, interpolate = TRUE)
 
-gg_cor_metadata <- ggplot() +
-  annotation_custom(g, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
-  theme_void()
+#gg_cor_metadata <- ggplot() +
+#  annotation_custom(g, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+#  theme_void()
 
 ## p-values of correlation with covariates
 correlate_factors_with_covariates(MOFAobject, 
@@ -709,17 +715,16 @@ gg_factor1_factor2 <- ggplot(plotTab, aes(x = F1, y = F2)) +
     guides(color = guide_legend(ncol = 2)) +
     xlab("Factor 1") + ylab("Factor 2") +
     theme_bw()
-gg_factor1_factor2_simplified <- 
-    ggplot(plotTab, aes(x = F1, y = F2)) +
+png("figure/figure2_factor1_factor2_simplified.png", width = 1500, height = 1500, res = 300)
+ggplot(plotTab, aes(x = F1, y = F2)) +
     geom_point(aes(x = F1, y = F2, color = tissue),
         stroke = 2, size = 4) +
-    #scale_shape_manual(values = c(TU = 21, NAT = 22)) +
-    #guides(color = guide_legend(ncol = 2)) +
     ggnewscale::new_scale_colour() +
     geom_point(aes(color = sex), size = 2) +
-    guides(color = guide_legend(ncol = 2)) +
+    scale_color_manual(values = c(f = "#99a3a2", m = "#b00fe2")) +
     xlab("Factor 1") + ylab("Factor 2") +
     theme_bw()
+dev.off()
 
 ## Factor 1 and 3
 gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
@@ -742,13 +747,15 @@ gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
 #| warning: false
 #| results: false
 #| fig-show: hide
-gg_top_weights <- plot_top_weights(MOFAobject,
+png("figure/figure2_top_weights.png", width = 1500, height = 1500, res = 300)
+plot_top_weights(MOFAobject,
   view = "metabolomics",
   factor = 1,
   nfeatures = 10,     # Number of features to highlight
   scale = TRUE,          # Scale weights from -1 to 1
   abs = FALSE             # Take the absolute value?
 )
+dev.off()
 ```
 
 5.  Analyse the feature intensities across samples and relationships between features using the information from the MOFA model. The visualizations are helpful for identifying patterns clusters, assessing data quality and batch effects, detecting potential outliers, and understanding how different features, factors, or sample groups contribute to the overall variation in the dataset. The visualizations should be created for each factor of interest and for the most important (e.g. top 10 or 20) features per factor (*choice of user*).
@@ -760,14 +767,15 @@ gg_top_weights <- plot_top_weights(MOFAobject,
 #| warning: false
 #| results: false
 #| fig-show: hide
-gg_heatmap <- plot_data_heatmap(MOFAobject, view = "metabolomics", 
+png("figure/figure2_heatmap.png", width = 1500, height = 1500, res = 300)
+plot_data_heatmap(MOFAobject, view = "metabolomics", 
     factor = 1, features = 10,
     ## extra arguments that are passed to the `pheatmap` function
     cluster_rows = TRUE, cluster_cols = FALSE, show_rownames = TRUE, 
-    show_colnames = TRUE) |>
-    as.ggplot()
+    show_colnames = FALSE, annotation_samples = "tissue")
+dev.off()
 
-plot_data_scatter(MOFAobject, view = "metabolomics", factor = 1, features = 10, 
+plot_data_scatter(MOFAobject, view = "metabolomics", factor = 1, features = 6, 
     add_lm = TRUE, color_by = "tissue")
 ```
 
@@ -779,14 +787,30 @@ plot_data_scatter(MOFAobject, view = "metabolomics", factor = 1, features = 10,
 #| warning: false
 #| results: false
 #| fig-show: hide
-g <- plot_grid(gg_cor, gg_variance, gg_cor_metadata, gg_factor1_factor2, 
-    gg_top_weights, gg_heatmap,
-    ncol = 2, labels = "AUTO")
-ggsave(filename = "figure/figure2.jpg", plot = g, device = "jpg", dpi = 800, 
-       height = 10, width = 6)
+## load images
+gg_cor <- image_read("figure/figure2_cor.png")
+gg_variance <- image_read("figure/figure2_variance.png")
+gg_cor_metadata <- image_read("figure/figure2_cor_metadata.png") |>
+    image_crop(geometry = "1250x1500+0+200")
+gg_factor1_factor2_simplified <- image_read("figure/figure2_factor1_factor2_simplified.png")
+gg_top_weights <- image_read("figure/figure2_top_weights.png")
+gg_heatmap <- image_read("figure/figure2_heatmap.png")
+
+## convert images to ggplot objects
+gg_cor <- ggdraw() + draw_image(gg_cor)
+gg_variance <- ggdraw() + draw_image(gg_variance)
+gg_cor_metadata <- ggdraw() + draw_image(gg_cor_metadata)
+gg_factor1_factor2_simplified <- ggdraw() + draw_image(gg_factor1_factor2_simplified)
+gg_top_weights <- ggdraw() + draw_image(gg_top_weights)
+gg_heatmap <- ggdraw() + draw_image(gg_heatmap)
+
+g <- plot_grid(gg_cor, gg_variance, 
+                gg_cor_metadata, gg_factor1_factor2_simplified, 
+                gg_top_weights,gg_heatmap,
+     ncol = 2, rel_widths = c(1, 1), labels = "AUTO")
+ggsave(filename = "figure/figure2.jpg", plot = g, device = "jpg", dpi = 600)
 ```
 
-Figure 2 shows ...
 
 ## Differential Expression Analysis
 
@@ -1045,9 +1069,9 @@ This chapter demonstrated how to perform metabolomics data analysis in *R* using
 Figure 1: Assessment of log-transformation of proteomics dataset on quality metrics.
 A: Mean-sd plot of raw data. B: Mean-sd plot of transformed data. 
 Log-transformation controls heteroskedasticity.
-B: PCA of raw data. C: PCA of transformed data. Log-transformation increases
+C: Matrix of Euclidean distances between samples of raw data. 
+D: Matrix of Euclidean distances between samples of transformed data.
+E: PCA of raw data. F: PCA of transformed data. Log-transformation increases
 variation on prinpical component 1 and 2.
-E: Matrix of Euclidean distances between samples of raw data. 
-F: Matrix of Euclidean distances between samples of transformed data.
 
 Figure 2:
