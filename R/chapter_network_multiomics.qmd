@@ -777,6 +777,7 @@ gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
 #| warning: false
 #| results: false
 #| fig-show: hide
+
 png("figure/figure2_top_weights.png", width = 1500, height = 1500, res = 300)
 plot_top_weights(MOFAobject,
   view = "metabolomics",
@@ -804,9 +805,9 @@ plot_data_heatmap(MOFAobject, view = "metabolomics",
     cluster_rows = TRUE, cluster_cols = FALSE, show_rownames = TRUE, 
     show_colnames = FALSE, annotation_samples = "tissue")
 dev.off()
-# 
-# plot_data_scatter(MOFAobject, view = "metabolomics", factor = 1, features = 6, 
-#     add_lm = TRUE, color_by = "tissue")
+ 
+plot_data_scatter(MOFAobject, view = "metabolomics", factor = 1, features = 6, 
+    add_lm = TRUE, color_by = "tissue")
 ```
 
 
