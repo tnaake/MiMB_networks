@@ -1089,7 +1089,7 @@ is less effective for networks with overlapping communities.
 - *Community structure detection based on short random walks* (*cluster_walktrap*) simulates random walks on the network to detect community structure, assuming vertices within the same community are more likely to be visited in one walk. The algorithm may be slow for large networks.
 
 
-::: {.table table-width="100%" table-widths="28,17,17,21,17"}
+<!-- ::: {.table} -->
 
 Table 1: **Compatibility of community detection algorithms with network properties** 
 
@@ -1107,8 +1107,11 @@ Table 1: **Compatibility of community detection algorithms with network properti
 | *cluster_spinglass*         |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
 | *cluster_walktrap*          |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|  
 
+: width="100%"
 
-:::
+: tbl-colwidths="28,17,17,21,17"
+
+<!-- ::: -->
 
 
 ```{r network_cluster}
