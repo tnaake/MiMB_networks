@@ -1074,7 +1074,7 @@ image.plot(legend.only = TRUE, add = FALSE, legend.lab = "MOFA Factor1 values",
 dev.off()
 ```
 
-6.  Choose and apply module determination algorithm (*choice of user*). To detect substructures in the graph, module determination algorithms can be applied on the graph. Common algorithms are (*igraph* implementation in brackets, see @tbl-communitydetection for further details):
+6.  Choose and apply module determination algorithm (*choice of user*). To detect substructures in the graph, module determination algorithms can be applied on the graph. Common algorithms are (*igraph* implementation in brackets, see Table 1 for further details):
 - *Community structure detection based on edge betweenness* (*cluster_edge_betweenness*) detects communities by iteratively removing edges with the highest betweenness centrality, splitting the network into distinct modules. It works well for small graphs, provides a clear hierarchical structure. The algorithm may be computationally expensive for large networks.
 - *Community structure detection via greedy optimization of modularity* (*cluster_fast_greedy*) uses hierarchical agglomeration to merge vertices into communities, optimizing the modularity at each step. The algorithm works efficiently for large graphs, but 
 is less effective for networks with overlapping communities.
@@ -1088,11 +1088,11 @@ is less effective for networks with overlapping communities.
 - *Community structure detection based on statistical mechanics* (*cluster_spinglass*) models community detection as an energy minimization problem via a spin-glass model and simulated annealing. The algorithm is computationally expensive for large networks and may be sensitive to parameter settings.
 - *Community structure detection based on short random walks* (*cluster_walktrap*) simulates random walks on the network to detect community structure, assuming vertices within the same community are more likely to be visited in one walk. The algorithm may be slow for large networks.
 
-::: {.tbl-cap}
-Table: **Compatibility of community detection algorithms with network properties** {#tbl-communitydetection}
-:::
 
-:::{.table width="100%"}
+::: {.table table-width="100%" table-widths="28,17,17,21,17"}
+
+Table 1: **Compatibility of community detection algorithms with network properties** 
+
 | algorithm                   | undirected   | directed     | unweighted   | weighted     |
 |-----------------------------|--------------|--------------|--------------|--------------|
 | *cluster_edge_betweenness*  |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
@@ -1106,12 +1106,10 @@ Table: **Compatibility of community detection algorithms with network properties
 | *cluster_optimal*           |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
 | *cluster_spinglass*         |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
 | *cluster_walktrap*          |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|  
+
+
 :::
 
-:::{.table-widths="28,17,17,21,17"}
-:::
-
-<!-- : Compatibility of community detection algorithms with network properties {#tbl-community_detection, tbl-colwidths="[28, 17, 17, 21, 17]"} -->
 
 ```{r network_cluster}
 #| eval: true
