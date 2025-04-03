@@ -3,7 +3,7 @@ title: "Multi-omics guided pathway and network analysis of clinical metabolomics
 author:
   - name: "Christina Schmidt"
     affiliation:
-      - Bioquant, Heidelberg
+      - Heidelberg University, Faculty of Medicine, and Heidelberg University Hospital, Institute for Computational Biomedicine, Heidelberg, Germany
   - name: "Thomas Naake"
     affiliation:
       - name: European Molecular Biology Laboratory, Meyerhofstrasse 1, 69117 Heidelberg, Germany
