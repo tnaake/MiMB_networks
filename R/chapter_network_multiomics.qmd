@@ -869,7 +869,7 @@ To systematically define which statistical tests to consider one can follow thes
 
 Here we use the R package [MetaProViz](https://saezlab.github.io/MetaProViz/index.html) to perform differential analysis since it automatically performs both, the shapiro.test for normality and the Bartlett's test for homoscedasticity, and the choice between different statistical test [@Schmidt2025]. Importantly, MetaProViz also adjusts for multiple testing using Benjamini Hochberg, False Discovery Rate (FDR), Bonferroni or Holm [@Schmidt2025].
 
-For simplicity, we will shocase an example performing a one-versus-one comparison of tumur versus normal:
+For simplicity, we will showcase an example performing a one-versus-one comparison of tumour versus normal:
 ```{r}
 #| eval: true
 #| echo: false
@@ -877,9 +877,8 @@ For simplicity, we will shocase an example performing a one-versus-one compariso
 #| warning: false
 #| results: false
 
-
 # Differential metabolite analysis
-DMA_Res <- MetaProViz::DMA(InputData= as.data.frame(t(SummarizedExperiment::assay(metabolomics))),
+DMA_Res <- MetaProViz::DMA(InputData= as.data.frame(t(SummarizedExperiment::assay(metabolomics)))%>% dplyr::mutate(across(everything(), ~ tidyr::replace_na(.x, 0))),
                            SettingsFile_Sample= as.data.frame(SummarizedExperiment::colData(metabolomics)),
                            SettingsInfo = c(Conditions="tissue", Numerator="TU" , Denominator = "NAT"),
                            SettingsFile_Metab = as.data.frame(SummarizedExperiment::rowData(metabolomics)),
@@ -889,12 +888,44 @@ DMA_Res <- MetaProViz::DMA(InputData= as.data.frame(t(SummarizedExperiment::assa
                            PerformBartlett = TRUE,
                            SaveAs_Plot = NULL,
                            SaveAs_Table = NULL)
-
-
 ```
 
+Now we can inspect the results starting with the Shapiro test results:
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
 
-Note, when dealing with high number of samples --\> inflation of p-values still persists (see ... for a discussion for RNAseq data). 
+DMA_Res[["ShapiroTest"]][["DF"]]%>%
+  as.data.frame()%>%
+  dplyr::select(1:5)%>%
+  kableExtra::kbl(caption = "`Shaprio.test` results.") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria", font_size = 12) 
+
+DMA_Res[["ShapiroTest"]][["Plot"]]
+```
+
+Moreover, we can have a look at the results of the differential analysis 
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
+
+DMA_Res[["DMA"]][["TU _vs_ NAT"]]%>%
+  as.data.frame()%>%
+  dplyr::select(1,23:28)%>%
+  dplyr::arrange(p.adj)%>%
+  dplyr::slice(1:10) %>% 
+  kableExtra::kbl(caption = "DMA results Tumoru versus Normal.") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria", font_size = 12) 
+
+DMA_Res[["VolcanoPlot"]]
+
+```
 
 
 The limma method assumes that the residuals of the linear model are approximately normally distributed. Check this by
@@ -931,8 +962,42 @@ B. Q-Q plot
 ```
 
 ### Visualization of differential analysis results
-<!-- !!! Christina, please add here !!! -->
 
+We have already seen the automatically produced Volcano plot of the differential analysis results. The x-axis represents the log2 fold change, while the y-axis represents the negative logarithm of the p-adjusted value. The volcano plot is a scatter plot that displays the relationship between the magnitude of change (log2 fold change) and the significance (p adjusted value) of each metabolite. Points above a certain threshold are considered statistically significant and hence it is important to set thresholds for significance (e.g. p.adj < 0.05) and log2 fold change(e.g. |log2FC| > 0.5).
+
+With [MetaProViz](https://saezlab.github.io/MetaProViz/index.html) visualisation, we can easily add additional relevant information to the plot [@Schmidt2025]. First it can be relevant to add the metabolite name to the plot and colour code for metabolite class, which describes the metabolite class as provided by Biocrates. 
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
+
+MetaProViz::VizVolcano(InputData=DMA_Res[["DMA"]][["TU _vs_ NAT"]]%>%
+                                  tibble::column_to_rownames("Metabolite"),
+                       SettingsInfo= c(color="class"),
+                       SettingsFile_Metab= DMA_Res[["DMA"]][["TU _vs_ NAT"]]%>%
+                                            tibble::column_to_rownames("Metabolite")%>%
+                                            dplyr::select(24:28))
+```
+
+From the plot it is immediately clear that there are many metabolite classes displayed on the plot, which can make it difficult to interpret. Hence, we can create individual plots for each of the metabolite classes. Yet, as this would lead to many plots, we will select only three metabolite classes to showcase:
+```{r}
+#| eval: false
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
+
+MetaProViz::VizVolcano(InputData=DMA_Res[["DMA"]][["TU _vs_ NAT"]]%>%
+                                  tibble::column_to_rownames("Metabolite")%>%
+                                  dplyr::filter(class %in% c("Ceramides", "Triacylglycerols", "Sphingolipids")),
+                       SettingsInfo= c(individual="class"),
+                       SettingsFile_Metab= DMA_Res[["DMA"]][["TU _vs_ NAT"]]%>%
+                                            tibble::column_to_rownames("Metabolite")%>%
+                                            dplyr::select(24:28),
+                       SelectLab = NULL)
+```
 
 
 ## Pathway and network analysis
