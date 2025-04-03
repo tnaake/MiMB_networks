@@ -1000,38 +1000,24 @@ MetaProViz::VizVolcano(InputData=DMA_Res[["DMA"]][["TU _vs_ NAT"]]%>%
 ```
 
 
-## Analysis using biological knowledge
-
-Pathway, footprinting, networks
-
+## Analysis using biological prior knowledge
 <!-- !!! Christina, please add here !!! -->
-ocEAn?? pathway analysis?
 
-Footprinting connects metabolomics data to upstream regulatory elements. Parameters like pathway size and significance thresholds should be adjusted based on the dataset.
+Christina: Structure to work on:
+1. Explain the type of prior knwowledge avaialable and dependent on this, which analysis can be doen (i.e. pathway enrichment, footprinting, network analysis)
+2. difference metabolomics other omics 
+3. metabolite IDs
+4. Discuss: Parameters like pathway size and significance thresholds should be adjusted based on the dataset.
+
+include: PROGENY, Hallmarks, Gaude for proteomics
+include: KEGG, chemcial class for metabolomics
+include Metalinks-db and gene-metab set (Gaude) for combine enrichment analysis
+
+
+
+Thomas: 
 
 “Paradoxically, an omics gene cluster that is highly similar to gene sets in a reference database may be of lesser interest, since the cluster and its function have already been well characterized. Of greater interest are clusters of genes that have not been previously implicated, because it is precisely in these cases that new biological insights emerge. These less-studied cases may either show no statistically significant enrichment in the reference database, or they may return enrichments that are significant in terms of P value but not substantial in terms of gene set overlap. Here, an immediate next step is to explore the biological literature, as well as complementary datasets, to learn as much as possible about the genes in question. The goal is to mine knowledge pertinent to each gene and then use this knowledge to synthesize mechanistic hypotheses for a function that might be held in common by all or many genes in the set. This protracted process of discerning relevant findings from data and literature, then reasoning on this information to synthesize functional hypotheses, has not yet been widely automated but is one of the central tasks performed by a genome scientist.” Use of large language models (https://www.nature.com/articles/s41592-024-02525-x?utm_source=nmeth_etoc&utm_medium=email&utm_campaign=toc_41592_22_1&utm_content=20250114)
-
-
-<!-- !!! Christina, please add here !!! -->
-
---\> we can use Progeny to test factor weights of proteomics data and check for up/downregulation of pathways
-
-### Pathway enrichment
-
-Pathway enrichment links significant metabolites to biological pathways, providing context for observed changes. Ensure the metabolite identifiers match the database (e.g., HMDB IDs).
-
-```{r}
-#| eval: true
-#| echo: false
-#| message: false
-#| warning: false
-#| results: false
-```
-
-
-<!-- !!! Christina, please add here !!! -->
-
-<!-- add other points??? -->
 
 ## Experimental network analysis using statistical methods
 
