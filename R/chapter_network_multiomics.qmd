@@ -854,27 +854,48 @@ ggsave(filename = "figure/figure2.jpg", plot = g, device = "jpg", dpi = 600)
 
 ## Differential Expression Analysis
 
-<!-- !!! Christina, please add here !!! -->
---\> use metaProViz?
-
 Differential analysis identifies metabolites with significant changes between conditions. Selecting appropriate statistical tests depends on the data distribution and experimental design.
 
 ### Statistical Testing
+To systematically define which statistical tests to consider one can follow these steps:
 
+1. Define which comparison(s) should be performed, which depends on the metainformation in your data as well as on the biological question. For ***one_vs_one (single comparison)*** with numerator= “Condition1” and denominator = “Condition2”. Here statistical tests such as t.test, wilcox.test, chisq.test, cor.test or lmFit can be used. For ***all_vs_one (multiple comparison)*** with numerator= c(“Condition2”, “Condition3”, “ConditionN”) and denominator = “Condition1” or ***all_vs_all (multiple comparison)*** with numerator= c(“Condition1”, “Condition2”, “ConditionN”) and denominator = c(“Condition1”, “Condition2”, “ConditionN”) multiple testing has to be performed for which statistical tests such as aov, welch, kruskal.test or lmFit can be used.
+
+2. Check assumption of normality to understand if the data follow a normal- or not-normal distribution by for example performing a shapiro.test. For normally distributed data, t-tests or aov can be used, whilst for non-normally distributed data, non-parametric tests like wilcox.test rank-sum or kruskal.test are appropriate.
+
+3. Check if the data are homoscedastic (equal variance) using Levene's test or Bartlett's test. If the data are not homoscedastic, consider using welch or wilcox.test.
+
+4. Are there missing values (NAs) in the data? If this is the case tests such as lmFit needs to be used, as limma fits a linear model to the data and can handle missing values. Yet, the limma method assumes that the residuals of the linear model are approximately normally distributed.
+
+Here we use the R package [MetaProViz](https://saezlab.github.io/MetaProViz/index.html) to perform differential analysis since it automatically performs both, the shapiro.test for normality and the Bartlett's test for homoscedasticity, and the choice between different statistical test [@Schmidt2025]. Importantly, MetaProViz also adjusts for multiple testing using Benjamini Hochberg, False Discovery Rate (FDR), Bonferroni or Holm [@Schmidt2025].
+
+For simplicity, we will shocase an example performing a one-versus-one comparison of tumur versus normal:
 ```{r}
 #| eval: true
 #| echo: false
-#| message: false
+#| message: true
 #| warning: false
 #| results: false
 
-# Perform moderated t-tests for each metabolite
+
+# Differential metabolite analysis
+DMA_Res <- MetaProViz::DMA(InputData= as.data.frame(t(SummarizedExperiment::assay(metabolomics))),
+                           SettingsFile_Sample= as.data.frame(SummarizedExperiment::colData(metabolomics)),
+                           SettingsInfo = c(Conditions="tissue", Numerator="TU" , Denominator = "NAT"),
+                           SettingsFile_Metab = as.data.frame(SummarizedExperiment::rowData(metabolomics)),
+                           StatPval ="t.test",
+                           StatPadj="fdr",
+                           PerformShapiro = TRUE,
+                           PerformBartlett = TRUE,
+                           SaveAs_Plot = NULL,
+                           SaveAs_Table = NULL)
+
 
 ```
 
-. Adjust for multiple testing. Multiple testing correction (e.g., FDR) is critical to reduce false positives. Note, when dealing with high number of samples --\> inflation of p-values still persists (see ... for a discussion for RNAseq data). Alternatively, you might use non-parametric tests such as the ...
 
-. Check assumption of normality. When performing t-tests or ANOVA, assumptions of normality and homoscedasticity should be verified. For non-parametric data, alternative tests like Wilcoxon rank-sum can be considered.
+Note, when dealing with high number of samples --\> inflation of p-values still persists (see ... for a discussion for RNAseq data). 
+
 
 The limma method assumes that the residuals of the linear model are approximately normally distributed. Check this by
 
@@ -910,6 +931,9 @@ B. Q-Q plot
 ```
 
 ### Visualization of differential analysis results
+<!-- !!! Christina, please add here !!! -->
+
+
 
 ## Pathway and network analysis
 
