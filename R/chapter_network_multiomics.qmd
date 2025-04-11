@@ -101,7 +101,7 @@ library("vsn")
 
 ## MetaProViz
 if (!require("MetaProViz", quietly = TRUE))
-   BiocManager::install("saezlab/MetaProViz")
+  BiocManager::install("saezlab/MetaProViz")
 library("MetaProViz")
 ```
 
@@ -997,10 +997,34 @@ MetaProViz::VizVolcano(InputData=DMA_Res[["DMA"]][["TU _vs_ NAT"]]%>%
 
 
 ## Analysis using biological prior knowledge
-<!-- !!! Christina, please add here !!! -->
+Prior Knowledge (PK) is a powerful tool in omics data analysis, allowing researchers to leverage existing biological information to gain mechanistic insights into their data. Here the type of prior knowledge will dictate the biological question that can be answered and how the results can be interpreted. Indeed, we can divide PK in three main categories:
+1. Collections of biological pathways or processes meaning sets of genes/metabolites with common characteristic (e.g. GO-term, KEGG,…), which are usable for classical mapping, where the dysregulation of a pathway is inferred from measurements of its own components (e.g. protein expression).
+2. Collections of enzymes/molecules and their targets meaning for example kinases and target phosphopeptides, which are usable for footprinitng analysis, which estimates the activities from molecular readouts of the targets (e.g. phosphosites) downstream of the enzyme (e.g. kinase). (REF: https://www.sciencedirect.com/science/article/pii/S2452310019300149, )
+3. Collections of enzymes/molecules, their targets and the interaction between them, which will depict a PK network (PKN), for which network-based approaches are needed to systematically integrate the data and extract coherent patterns. 
+
+In case of classical mapping and fooprinting analysis, basic statistical methods such as Gene Set Enrichment Analysis (GSEA), Over-Representation Analysis (ORA), MLM, ULM, etc. can be used to obtain a score for the activity of a kinase (=footprinting) or the dysregulation of a pathway (=mapping) [@BadiaIMompel2022]. Yet, it is important to understand that the choice of statistical method will influence the results and the biological interpretation. Indeed, GSEA uses a feature list ranked by their expression changes between conditions and hence finds pathways enriched at the top or bottom of the ranked gene list, whilst ORA is based on the fishers exact test and checks if for example a selection of upregulated features (e.g. Log2FC >1, p.adj < 0.05) are over-represented in a specific pathway. Apart from this biological perspective, also the methods performance should be taken into account. Indeed, in a benchmark the performance of methods were evaluated on transcriptomic and phospho-proteomic perturbation experiments and showed that simple linear models (e.g. ULM, MLM, etc.) outperform GSEA, whilst ORA performs similarly well [@BadiaIMompel2022]. 
+Since metabolomics usually detects less annotated features, as in features that have a metabolite ID, compared to other omics, it is important to take this into consideration for statistical testing. 
+
+
+- discuss ORA paper for metabolomics! (Background settings!) 
+- https://pubmed.ncbi.nlm.nih.gov/34492007/
+- https://www.nature.com/articles/s42255-025-01283-0 (new paper also cite in MetaProViz!)
+
+- showcase coverage of Biocrates (upsetplot?)
+
+- metabolomics discussion inflation deflation and coverage in prior knowledge.
+
+- MetalinksDB to combine with proteomics. 
+
+discuss progeny transcriptomics (perturbations mit signatures) --> progeny is weighted!
+Gene set enrichment kann auch footprint method sein (e.g. Progeny)
+
+mention where PK can be accessed: Omnipath, MetSigDB, MSigDB
+
+
 
 Christina: Structure to work on:
-1. Explain the type of prior knwowledge avaialable and dependent on this, which analysis can be doen (i.e. pathway enrichment, footprinting, network analysis)
+1. Explain the type of prior knowledge avaialable and dependent on this, which analysis can be doen (i.e. pathway enrichment, footprinting, network analysis)
 2. difference metabolomics other omics 
 3. metabolite IDs
 4. Discuss: Parameters like pathway size and significance thresholds should be adjusted based on the dataset.
@@ -1009,10 +1033,13 @@ include: PROGENY, Hallmarks, Gaude for proteomics
 include: KEGG, chemcial class for metabolomics
 include Metalinks-db and gene-metab set (Gaude) for combine enrichment analysis
 
+In the context of metabolomics and proteomics, prior knowledge can take various forms, including pathway databases, gene sets, and chemical classifications. These resources can be used for pathway enrichment analysis, network analysis, and other types of functional annotation.
 
 
-Thomas: 
+<!-- !!! Christina, to continue !!! -->
 
+
+<!-- !!! Thomas, I left this here, please check if you want to move this elsewhere. -->
 “Paradoxically, an omics gene cluster that is highly similar to gene sets in a reference database may be of lesser interest, since the cluster and its function have already been well characterized. Of greater interest are clusters of genes that have not been previously implicated, because it is precisely in these cases that new biological insights emerge. These less-studied cases may either show no statistically significant enrichment in the reference database, or they may return enrichments that are significant in terms of P value but not substantial in terms of gene set overlap. Here, an immediate next step is to explore the biological literature, as well as complementary datasets, to learn as much as possible about the genes in question. The goal is to mine knowledge pertinent to each gene and then use this knowledge to synthesize mechanistic hypotheses for a function that might be held in common by all or many genes in the set. This protracted process of discerning relevant findings from data and literature, then reasoning on this information to synthesize functional hypotheses, has not yet been widely automated but is one of the central tasks performed by a genome scientist.” Use of large language models (https://www.nature.com/articles/s41592-024-02525-x?utm_source=nmeth_etoc&utm_medium=email&utm_campaign=toc_41592_22_1&utm_content=20250114)
 
 ## Experimental network analysis using statistical methods
