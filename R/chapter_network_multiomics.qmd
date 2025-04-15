@@ -1002,8 +1002,78 @@ Prior Knowledge (PK) is a powerful tool in omics data analysis, allowing researc
 2. Collections of enzymes/molecules and their targets meaning for example kinases and target phosphopeptides, which are usable for footprinitng analysis, which estimates the activities from molecular readouts of the targets (e.g. phosphosites) downstream of the enzyme (e.g. kinase). (REF: https://www.sciencedirect.com/science/article/pii/S2452310019300149, )
 3. Collections of enzymes/molecules, their targets and the interaction between them, which will depict a PK network (PKN), for which network-based approaches are needed to systematically integrate the data and extract coherent patterns. 
 
-In case of classical mapping and fooprinting analysis, basic statistical methods such as Gene Set Enrichment Analysis (GSEA), Over-Representation Analysis (ORA), MLM, ULM, etc. can be used to obtain a score for the activity of a kinase (=footprinting) or the dysregulation of a pathway (=mapping) [@BadiaIMompel2022]. Yet, it is important to understand that the choice of statistical method will influence the results and the biological interpretation. Indeed, GSEA uses a feature list ranked by their expression changes between conditions and hence finds pathways enriched at the top or bottom of the ranked gene list, whilst ORA is based on the fishers exact test and checks if for example a selection of upregulated features (e.g. Log2FC >1, p.adj < 0.05) are over-represented in a specific pathway. Apart from this biological perspective, also the methods performance should be taken into account. Indeed, in a benchmark the performance of methods were evaluated on transcriptomic and phospho-proteomic perturbation experiments and showed that simple linear models (e.g. ULM, MLM, etc.) outperform GSEA, whilst ORA performs similarly well [@BadiaIMompel2022]. 
-Since metabolomics usually detects less annotated features, as in features that have a metabolite ID, compared to other omics, it is important to take this into consideration for statistical testing. 
+In case of classical mapping and fooprinting analysis, basic statistical methods such as Gene Set Enrichment Analysis (GSEA), Over-Representation Analysis (ORA), MLM, ULM, etc. can be used to obtain a score for the activity of a kinase (=footprinting) or the dysregulation of a pathway (=mapping) [@BadiaIMompel2022]. Yet, it is important to understand that the choice of statistical method will influence the results and the biological interpretation. Indeed, GSEA uses a feature list ranked by their expression changes between conditions and hence finds pathways enriched at the top or bottom of the ranked gene list, whilst ORA is based on the fishers exact test and checks if for example a selection of upregulated features (e.g. Log2FC >1, p.adj < 0.05) are over-represented in a specific pathway. Apart from this biological perspective, also the methods performance should be taken into account. Indeed, in a benchmark the performance of methods were evaluated on transcriptomic and phospho-proteomic perturbation experiments and showed that simple linear models (e.g. ULM, MLM, etc.) outperform GSEA, whilst ORA performs similarly well [@BadiaIMompel2022]. Additionally, it is worth noting that pathway analysis was originally developed for gene expression data and even tough it was adapted to metabolomics data, it often produces misleading or nonsensical results due to the unique characteristics and constraints of metabolites compared with genes [@Lee2025]. In the next paragraph we will discuss those pitfalls in more detail.
+
+***1. Annotated metabolites and coverage in the prior knowledge***
+Different to gene names, there are no standardized names for metabolites. Indeed, there are different databases that collect metabolite information and assign a metabolite ID to each entry, as for example, the Human Metabolome Database (HMDB) with HMDB IDs [@REF] or the Kyoto Encyclopedia of Genes and Genomes (KEGG) with KEGG IDs [@REF]. Additionally, those databases often include multiple entries for the same metabolite with different degrees of ambiguity [@REF], as for example KEGG, which includes entries for L-Alanine, D-Alanine and Alanine [@REF]. Since experimentally different degrees of ambiguity are needed due to the machine sensitivity, where for example stereoisomers are not distinguished [@REF]. Yet, standard metabolite-sets used as prior knowledge often contain one specific metabolite ID, which can hinder mapping to the detected data [@Schmidt2025]. Consequently,  if metabolite detection is unspecific due to machine sensitivity, it is important to assign all possible metabolite IDs to ultimately increase the overlap with metabolite-sets of interest [@Schmidt2025]. 
+Biocrates, whose kit was used to detect the example study, does an excellent job since they provide all possible identifiers for each trivial metabolite name. 
+
+<!-- ::: {.table} -->
+
+Table 1: **preview of selected metabolites to showcase ChEBI and HMDB information provided by Biocrates.** 
+
+| Trivial Name                | Class             | ChEBI                     | HMDB                    |
+|-----------------------------|-------------------|---------------------------|-------------------------|
+| *Ala*                       |Aminoacids         |15570, 16449, 16977, 76050 |HMDB0000161, HMDB0001310 |
+| *C0*                        |Acylcarnitines     |11060, 16347, 17126        |HMDB0000062              |
+| *Cer d16:1/18:0*            |Ceramides          |None                       |None                     |
+| *DG 16:0_20:3*              |Diacylglycerols    |84402                      |HMDB0007111              |
+
+
+: width="100%"
+
+: tbl-colwidths="28,17,17,21,17"
+
+<!-- ::: -->
+
+As it becomes clear, for some metabolites multiple ChEBI and HMDB IDs are available, whilst for other metabolite those databases have no entry. To systematically look into this, we can visualize the available IDs for the detected metabolites in our example data:
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+# Load biocrates IDs:
+FeatureMetadata_Biocrates <- MetaProViz::ToyData(Data="BiocratesFeatureTable")
+
+# Add IDs to our measured data
+SettingsFile_Metab <-  merge(x= as.data.frame(SummarizedExperiment::rowData(metabolomics))[,c(1:2)],
+                             y= FeatureMetadata_Biocrates[,c(2:3,5,7,11)],
+                             by.x="feature_original",
+                             by.y="TrivialName_Prior2023",
+                             all.x=TRUE)
+
+#Plot Upset plot: (will be updated in MetaProViz soon, as we are adding it to export)
+Plotdf <- data.frame(
+  trivname = SettingsFile_Metab$feature_original,
+  CHEBI = as.integer(!is.na(SettingsFile_Metab$CHEBI)),
+  HMDB  = as.integer(!is.na(SettingsFile_Metab$HMDB)),
+  LIMID = as.integer(!is.na(SettingsFile_Metab$LIMID))
+)%>%
+  mutate(
+    None = as.integer(rowSums(across(c(CHEBI, HMDB, LIMID))) == 0),
+    Class = as.factor(SettingsFile_Metab$Class)  # or however you access the Class column
+  )
+
+UpsetPlot <- MetaProViz:::GenerateUpset(df = Plotdf,
+                                        class_col = "Class",
+                                        intersect_cols = c("LIMID", "HMDB", "CHEBI", "None"),
+                                        plot_title = "Biocrates IDs available for the detected metabolites.",
+                                        palette_type = "polychrome",
+                                        output_file = NULL)
+plot(UpsetPlot)
+```
+
+From the upset plot it becomes clear that for some metabolite classes only certain metabolite ID types are available. This means, if for example Reactome [@REF], which uses chEBI IDs is used for pathway enrichment analysis, only a small subset of the detected metabolites will be included, which needs to be taken into consideration when interpreting the results biologically. 
+
+In order to ensure the maximum overlap between measured metabolites and prior knowledge of choice we recommend meticulous assignment of metabolite IDs to the detected metabolites. 
+
+Lastly, given the incomplete coverage in MS-based metabolomics and hence the low coverage of the prior knowledge, it is important to take this into consideration for statistical testing. Indeed, for metabolomics methods such as ORA were discussed to perform well if used correctly, since ORA offers the ability to restrict the background to the detected metabolites (assay-specific background) [@Wieder2021].
+
+***2. Available prior knowledge for metabolites***
+
+- Cite cornetto, ocean, MetaProViz, Liana, MetalinksDB
+***3. Biological interpretation of the results***
 
 
 - discuss ORA paper for metabolomics! (Background settings!) 
@@ -1208,7 +1278,7 @@ is less effective for networks with overlapping communities.
 
 <!-- ::: {.table} -->
 
-Table 1: **Compatibility of community detection algorithms with network properties** 
+Table 2: **Compatibility of community detection algorithms with network properties** 
 
 | algorithm                   | undirected   | directed     | unweighted   | weighted     |
 |-----------------------------|--------------|--------------|--------------|--------------|
