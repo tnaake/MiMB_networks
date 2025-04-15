@@ -923,40 +923,6 @@ DMA_Res[["VolcanoPlot"]]
 
 ```
 
-
-The limma method assumes that the residuals of the linear model are approximately normally distributed. Check this by
-
-A. Histogram of Residuals After fitting a linear model, plot the residuals to visually inspect normality:
-
-```{r}
-#| eval: true
-#| echo: false
-#| message: false
-#| warning: false
-#| results: false
-# design <- model.matrix(~ factor(c(1,1,2,2)))  # Simple two-group design
-# fit <- lmFit(expression_data, design)
-# 
-# # Get residuals
-# residuals <- residuals(fit)
-# 
-# # Plot histogram
-# hist(residuals, breaks = 50, main = "Histogram of Residuals", xlab = "Residuals")
-
-```
-
-B. Q-Q plot
-
-```{r}
-#| eval: true
-#| echo: false
-#| message: false
-#| warning: false
-#| results: false
-# qqnorm(residuals)
-# qqline(residuals, col = "red")}
-```
-
 ### Visualization of differential analysis results
 
 We have already seen the automatically produced Volcano plot of the differential analysis results. The x-axis represents the log2 fold change, while the y-axis represents the negative logarithm of the p-adjusted value. The volcano plot is a scatter plot that displays the relationship between the magnitude of change (log2 fold change) and the significance (p adjusted value) of each metabolite. Points above a certain threshold are considered statistically significant and hence it is important to set thresholds for significance (e.g. p.adj < 0.05) and log2 fold change(e.g. |log2FC| > 0.5).
@@ -1071,8 +1037,10 @@ In order to ensure the maximum overlap between measured metabolites and prior kn
 Lastly, given the incomplete coverage in MS-based metabolomics and hence the low coverage of the prior knowledge, it is important to take this into consideration for statistical testing. Indeed, for metabolomics methods such as ORA were discussed to perform well if used correctly, since ORA offers the ability to restrict the background to the detected metabolites (assay-specific background) [@Wieder2021].
 
 ***2. Available prior knowledge for metabolites***
+Metabolite-sets for classical mappings can be found/ extracted from many different databases such as KEGG, Reactome or WikiPathways to name a few, and there are also databases that have merged these resources to provide a integrated usability of these resources
 
-- Cite cornetto, ocean, MetaProViz, Liana, MetalinksDB
+
+- Cite ocean, MetaProViz, Liana, MetalinksDB
 ***3. Biological interpretation of the results***
 
 
@@ -1105,7 +1073,7 @@ include Metalinks-db and gene-metab set (Gaude) for combine enrichment analysis
 
 In the context of metabolomics and proteomics, prior knowledge can take various forms, including pathway databases, gene sets, and chemical classifications. These resources can be used for pathway enrichment analysis, network analysis, and other types of functional annotation.
 
-
+mention cornetto for metabolic networks
 <!-- !!! Christina, to continue !!! -->
 
 
