@@ -972,7 +972,7 @@ In case of classical mapping and fooprinting analysis, basic statistical methods
 
 ***1. Annotated metabolites and coverage in the prior knowledge***
 Different to gene names, there are no standardized names for metabolites. Indeed, there are different databases that collect metabolite information and assign a metabolite ID to each entry, as for example, the Human Metabolome Database (HMDB) with HMDB IDs [@REF] or the Kyoto Encyclopedia of Genes and Genomes (KEGG) with KEGG IDs [@REF]. Additionally, those databases often include multiple entries for the same metabolite with different degrees of ambiguity [@REF], as for example KEGG, which includes entries for L-Alanine, D-Alanine and Alanine [@REF]. Since experimentally different degrees of ambiguity are needed due to the machine sensitivity, where for example stereoisomers are not distinguished [@REF]. Yet, standard metabolite-sets used as prior knowledge often contain one specific metabolite ID, which can hinder mapping to the detected data [@Schmidt2025]. Consequently,  if metabolite detection is unspecific due to machine sensitivity, it is important to assign all possible metabolite IDs to ultimately increase the overlap with metabolite-sets of interest [@Schmidt2025]. 
-Biocrates, whose kit was used to detect the example study, does an excellent job since they provide all possible identifiers for each trivial metabolite name. 
+Biocrates, whose kit was used to detect the example study, does an excellent job since they provide all possible identifiers for each trivial metabolite name (Table 1). Yet, if this is not the case and only one metabolite ID type is available or within an ID type only one ID was assigned, The R package MetaProViz can be used to translate metabolite IDs, quantify ambiguities and assign potential other IDs to the detected metabolites [@Schmidt2025].
 
 <!-- ::: {.table} -->
 
@@ -992,7 +992,7 @@ Table 1: **preview of selected metabolites to showcase ChEBI and HMDB informatio
 
 <!-- ::: -->
 
-As it becomes clear, for some metabolites multiple ChEBI and HMDB IDs are available, whilst for other metabolite those databases have no entry. To systematically look into this, we can visualize the available IDs for the detected metabolites in our example data:
+Looking into the example metabolites from Table 1 it becomes clear that for some metabolites multiple ChEBI and HMDB IDs are available, whilst for other metabolite those databases have no entry. To systematically look into this, we can visualize the available IDs for the detected metabolites in our example data:
 ```{r}
 #| eval: true
 #| echo: false
@@ -1032,19 +1032,27 @@ plot(UpsetPlot)
 
 From the upset plot it becomes clear that for some metabolite classes only certain metabolite ID types are available. This means, if for example Reactome [@REF], which uses chEBI IDs is used for pathway enrichment analysis, only a small subset of the detected metabolites will be included, which needs to be taken into consideration when interpreting the results biologically. 
 
-In order to ensure the maximum overlap between measured metabolites and prior knowledge of choice we recommend meticulous assignment of metabolite IDs to the detected metabolites. 
-
-Lastly, given the incomplete coverage in MS-based metabolomics and hence the low coverage of the prior knowledge, it is important to take this into consideration for statistical testing. Indeed, for metabolomics methods such as ORA were discussed to perform well if used correctly, since ORA offers the ability to restrict the background to the detected metabolites (assay-specific background) [@Wieder2021].
+In order to ensure the maximum overlap between measured metabolites and prior knowledge of choice we recommend meticulous assignment of metabolite IDs to the detected metabolites. Lastly, given the incomplete coverage in MS-based metabolomics and hence the low coverage of the prior knowledge, it is important to take this into consideration for statistical testing. Indeed, for metabolomics methods such as ORA were discussed to perform well if used correctly, since ORA offers the ability to restrict the background to the detected metabolites (assay-specific background) [@Wieder2021].
 
 ***2. Available prior knowledge for metabolites***
-Metabolite-sets for classical mappings can be found/ extracted from many different databases such as KEGG, Reactome or WikiPathways to name a few, and there are also databases that have merged these resources to provide a integrated usability of these resources
+Metabolite sets for classical mappings can be found or extracted from many different databases such as KEGG, Reactome or WikiPathways to name a few, and there are also databases like RampDB that have merged these resources to provide a integrated usability [@REF]. These classical databases mainly carry information about the metabolic pathway and the metabolites that are assigned to them. Here it is important to acknowledge that the same metabolite will be part of multiple pathways and often include unspecific metabolites like cofactors, ions, H2O or CO2, which can not be detected with a classical mass-spec setups. The reason for this is that many metabolic pathways originate from genome scale metabolic models, which cover the whole reaction, and have not been adapted for the coverage in a metabolomics experiment. Hence, we recommend to exclude those metabolites prior to performing enrichment analysis. Apart from pathway-metabolite sets, chemical class-metabolite sets can be used for classical mapping to understand if certain compound classes are affected in the comparison of interest. 
+Both of those examples, pathway-metabolite sets and chemical class-metabolite sets, are not able to capture if the changed metabolites have other functions apart from being educts and products of enzymatic reactions. Indeed, metabolites can also act as signalling molecules by binding to receptors, which is not captured in those metabolite sets [@Farr&Dimitrov2024]. Therefore, we have developed a new database called MetalinksDB, which contains information about metabolite-receptor and metabolite-transporter interaction, as well as weather the binding of the metabolite to a receptor is activating or inhibiting [@Farr&Dimitrov2024]. Using MetalinksDB can not only enables combined pathway enrichment analysis on metabolite-gene sets or built a network of those interactions, but also adds biological value by highlighting the signalling potential of the metabolites [@Schmidt2025].
+Lastly, the prior knowledge network ocean includes a manually curated reduced model of human metabolism based on redHuman of Recon 3D and has developed a specific adaptation of weighted mean, using enzyme distance to weight interaction, to perform enrichment analysis [@Sciacovelli&Dugourd2022]. Hence, ocean explores coordinated deregulations of metabolite abundances to generate a metabolic footprint for each metabolic enzyme and ultimately define bottlenecks [@Sciacovelli&Dugourd2022].
+
+To use these different databases the original resource can be downloaded, but there are also more convenient solutions. Indeed, RaMP-DB has combined many classical resources trying to account for miss-mapping between the original resources by using molecular weight [@REF]. 
+
+- Cite MetaProViz, Liana for access to MetaLinkDB
+- Mention the conversion of gene-sets to gene-metabolite sets using cosmos (Cite cosmos)
+- Also mention Ominpath-metabo to access many of those resources. Whilst MetSigDB provides versions of the prior knowledge in a format usable for classical mapping, Ominpath-metabo provides the full breath of available information and enables user-specific selections. 
+
+- ID problem - inflate/deflate (When needing to translate IDs of pathways), also in regard to gene-metab
 
 
-- Cite ocean, MetaProViz, Liana, MetalinksDB
 ***3. Biological interpretation of the results***
 
+-Perform ORA and plot VolcanoPlot
 
-- discuss ORA paper for metabolomics! (Background settings!) 
+
 - https://pubmed.ncbi.nlm.nih.gov/34492007/
 - https://www.nature.com/articles/s42255-025-01283-0 (new paper also cite in MetaProViz!)
 
@@ -1289,11 +1297,6 @@ png("figure/figure3_network_infomap.png")
 plot(g_keep, vertex.label = NA, vertex.size = 3)
 dev.off()
 ```
-
-7.  Downstream analysis on modules, e.g. decoupleR, composition of networks, etc.?
-
-<!-- !!! Christina, please add here !!! -->
-
 
 ```{r figure_3}
 #| eval: true
