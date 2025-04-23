@@ -1153,7 +1153,7 @@ The biological interpretation of the results is crucial and should be done in th
 
 1. Understand the limitations of the prior knowledge used, such as potential biases in the underlying original resources. For example, if the prior knowledge is based on a specific database, it may not capture all relevant metabolites or pathways. This can lead to biased results and misinterpretation of the data. Moreover, the  choice of prior knowledge dictates the biological question one can address as discussed in the paragraph above for classical pathway-metabolite sets, chemical class-metabolite sets or receptor-metabolite sets.
 
-2. Understand the coverage of your experimental data in the prior knowledge resource. For example, if the prior knowledge only includes metabolites that are available on HMDB, this would in turn exclude many detected ceramides, glycosylceramides and triglycerols, whilst using ChEBI IDs would exclude almost all triacylglycerols (Fig. 4a-d). Here triacylglycerols include 226 metabolites of which only 11 have a ChEBI ID (Fig.4d). Hence, if the results of the enrichment analysis do not show those pathways as significantly altered, it does not mean that they are not altered, but rather that the prior knowledge used is not able to capture them. Consequently, it is important not to over-interpret the importance of the most altered pathways, but rather to use them as a starting point for further investigation not ignoring the detected metabolites that were not covered by the prior knowledge resource. Otherwise, combining multiple prior knowledge resources to increase the coverage of the detected metabolites is also an option.
+2. Understand the coverage of your experimental data in the prior knowledge resource. For example, if the prior knowledge only includes metabolites that are available on HMDB, this would in turn exclude many detected ceramides, glycosylceramides and triglycerols, whilst using ChEBI IDs would exclude almost all triacylglycerols (Fig. 4a-d). Here triacylglycerols include 226 metabolites of which only 11 have a ChEBI ID (Fig.4d). Hence, if the results of the enrichment analysis do not show those pathways as significantly altered, it does not mean that they are not altered, but rather that the prior knowledge used is not able to capture them. Consequently, it is important not to over-interpret the importance of the most altered pathways, but rather to use them as a starting point for further investigation not ignoring the detected metabolites that were not covered by the prior knowledge resource. Otherwise, combining multiple prior knowledge resources to increase the coverage of the detected metabolites is also an option. Lastly, it is important to check how many metabolites of e.g. a pathway in the prior knowledge have been detected. For example if a pathway only contains 20 metabolites and 13 of them are detected (65%), this is a stronger evidence than detecting 40 metabolites of a pathway containing 110 metabolites (36%). 
 
 ```{r}
 #| eval: true
@@ -1222,7 +1222,7 @@ Fig4D <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 
 ```
 
-To sum up, in order to interpret a metabolomics experiment in its entirety, it is important to understand the limitations of the prior knowledge used, the coverage of the experimental data in the prior knowledge resource, the impact of metabolite-set inflation and deflation on the results and the choice of statistical method used for enrichment analysis. Researchers should not solely rely on pathway analysis and often it is more beneficial to perform literature searches for the top/bottom altered metabolites, extract metabolite receptors that could be targeted by the altered metabolites or transporters that could release the metabolites into the environment. 
+To sum up, in order to interpret a metabolomics experiment in its entirety, it is important to understand the limitations of the prior knowledge used, the coverage of the experimental data in the prior knowledge resource, the impact of metabolite-set inflation and deflation on the results and the choice of statistical method used for enrichment analysis. Researchers should not solely rely on pathway analysis and often it is more beneficial to perform literature searches for the top/bottom altered metabolites, extract metabolite receptors that could be targeted by the altered metabolites or transporters that could release the metabolites into the environment. All of this will require close collaboration between data scientists and experimentalist in the future.
 
 ```{r figure_4}
 #| eval: true
@@ -1500,3 +1500,13 @@ E: PCA of raw data. F: PCA of transformed data. Log-transformation increases
 variation on prinpical component 1 and 2.
 
 Figure 2:
+
+Figure 3:
+A-B) Data distribution for each metabolite abundance of A) Normal Adjacent Tumour (NAT) and B) Tumour (TU). 
+C-H) Volcano plots of differential analysis comparing TU versus NAT using either the t-test and FDR adjustment (C) or the Wilcoxon rank-sum test and FDR adjustment (D-H). E) is colour coded based on the metabolite class as defined by Biocrates, whilst F-H) are selected metabolite panels based on Biocrates class.
+
+Figure 4:
+A) Upset plot of the metabolites IDs of the detected metabolites in the biocrates example dataset colour coded for the Biocrates defined metabolite classes.
+B-C) Volcano plots of differential analysis comparing TU versus NAT using the Wilcoxon rank-sum test and FDR adjustment, selecting for metabolite panels based on Biocrates class and colour coding for the available metabolite ID types.
+
+
