@@ -1060,7 +1060,6 @@ ggsave(filename = "figure/figure3.jpg",
        dpi = 600, 
        width = 16, 
        height = 13) 
-
 ```
 
 ## Analysis using biological prior knowledge
@@ -1149,7 +1148,7 @@ The biological interpretation of the results is crucial and should be done in th
 
 1. Understand the limitations of the prior knowledge used, such as potential biases in the underlying original resources. For example, if the prior knowledge is based on a specific database, it may not capture all relevant metabolites or pathways. This can lead to biased results and misinterpretation of the data. Moreover, the  choice of prior knowledge dictates the biological question one can address as discussed in the paragraph above for classical pathway-metabolite sets, chemical class-metabolite sets or receptor-metabolite sets.
 
-2. Understand the coverage of your experimental data in the prior knowledge resource. For example, if the prior knowledge only includes metabolites that are available on HMDB, this would in turn exclude many detected ceramides, glycosylceramides and triglycerols, whilst using ChEBI IDs would exclude almost all triacylglycerols (Fig. 4a-d). Here triacylglycerolswhich include 226 metabolites of which only 11 have a ChEBI ID (Fig.4d). Hence, if the results of the enrichment analysis do not show those pathways as significantly altered, it does not mean that they are not altered, but rather that the prior knowledge used is not able to capture them. Consequently, it is important not to over-interpret the importance of the most altered pathways, but rather to use them as a starting point for further investigation not ignoring the detected metabolites that were not covered by the prior knowledge resource. Otherwise, combining multiple prior knowledge resources to increase the coverage of the detected metabolites is also an option.
+2. Understand the coverage of your experimental data in the prior knowledge resource. For example, if the prior knowledge only includes metabolites that are available on HMDB, this would in turn exclude many detected ceramides, glycosylceramides and triglycerols, whilst using ChEBI IDs would exclude almost all triacylglycerols (Fig. 4a-d). Here triacylglycerols include 226 metabolites of which only 11 have a ChEBI ID (Fig.4d). Hence, if the results of the enrichment analysis do not show those pathways as significantly altered, it does not mean that they are not altered, but rather that the prior knowledge used is not able to capture them. Consequently, it is important not to over-interpret the importance of the most altered pathways, but rather to use them as a starting point for further investigation not ignoring the detected metabolites that were not covered by the prior knowledge resource. Otherwise, combining multiple prior knowledge resources to increase the coverage of the detected metabolites is also an option.
 
 ```{r}
 #| eval: false
@@ -1158,7 +1157,7 @@ The biological interpretation of the results is crucial and should be done in th
 #| warning: false
 #| results: false
 
-InputData <- DMA_Res[["DMA"]][["TU _vs_ NAT"]]%>%
+InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]]%>%
   tibble::column_to_rownames("Metabolite")%>%
   dplyr::filter(class %in% c("Ceramides", "Triacylglycerols", "Glycosylceramides"))
                     
@@ -1190,7 +1189,6 @@ SettingsFile_Metab <-  merge(x= as.data.frame(SummarizedExperiment::rowData(meta
 Res <- MetaProViz::VizVolcano(InputData=InputData ,
                        SettingsInfo= c(individual="Class", color="combined_label"),
                        SettingsFile_Metab= SettingsFile_Metab,
-                       SelectLab = NULL,
                        ylab ="-log10(p.adj)",
                        yCutoff = 0.1)
 
@@ -1202,16 +1200,21 @@ Fig4D <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 
 3. Understand the impact of metabolite-set inflation and deflation on the results. Indeed, due to the different metabolite ID types in combination with the metabolite ID coverage in metabolite-sets, it sometimes is required to translate metabolite IDs from one identifier type to another. For example, in the biocrates example data no KEGG IDs are available, yet if KEGG pathways are used for enrichment analysis, either the KEGG pathways or the metabolite IDs of the data have to be translated, which can lead to one-to-none, one-to-one, one-to-many and many-to-many mappings between the metabolite ID types. In turn, this mapping ambiguity can lead to inflation or deflation of the metabolite-set size, which needs to be taken into account when interpreting the results. To translate between metabolite IDs and quantify the mapping ambiguities tools like the R-package MetaProViz can be used [@Schmidt2025].
 
-4. 
+4. Understand how the choice of the statistical method used for enrichment analysis influences the interpretation of the results (see discussion above). Here it is also important to note that the chosen thresholds for e.g. up-regulated metabolites will affect the ORA results as it affects the basket size. The choice of ranking by Log2FC versus ranking by t-value, which is a combination of change and statistics, will alter the GSEA results.
 
-- Perform ORA and plot VolcanoPlot
-- Parameters like pathway size and significance thresholds need to be taken into account.
-- ID problem - inflate/deflate (When needing to translate IDs of pathways), also in regard to gene-metab
-- combined enrichment analysis: considr different omics sizes!
+5. Understand if performing enrichment analysis will be beneficial for the biological question at hand. 
+- Thomas Comment below
+- Also the paper that discusses the differences of genes are not metabolites! https://www.nature.com/articles/s42255-025-01283-0 
+- Example MetalinksDB to combine with proteomics?
+
+6. In case of combined gene-metabolite data, ...
+-different omics sizes: inflate (more significant genes, pathways only with genes, etc.)
+
+
 - https://pubmed.ncbi.nlm.nih.gov/34492007/
-- https://www.nature.com/articles/s42255-025-01283-0 (new paper also cite in MetaProViz!)
 
-- Showcase one example? MetalinksDB to combine with proteomics. 
+<!-- !!! Thomas, I left this here, please check if you want to move this elsewhere. -->
+“Paradoxically, an omics gene cluster that is highly similar to gene sets in a reference database may be of lesser interest, since the cluster and its function have already been well characterized. Of greater interest are clusters of genes that have not been previously implicated, because it is precisely in these cases that new biological insights emerge. These less-studied cases may either show no statistically significant enrichment in the reference database, or they may return enrichments that are significant in terms of P value but not substantial in terms of gene set overlap. Here, an immediate next step is to explore the biological literature, as well as complementary datasets, to learn as much as possible about the genes in question. The goal is to mine knowledge pertinent to each gene and then use this knowledge to synthesize mechanistic hypotheses for a function that might be held in common by all or many genes in the set. This protracted process of discerning relevant findings from data and literature, then reasoning on this information to synthesize functional hypotheses, has not yet been widely automated but is one of the central tasks performed by a genome scientist.” Use of large language models (https://www.nature.com/articles/s41592-024-02525-x?utm_source=nmeth_etoc&utm_medium=email&utm_campaign=toc_41592_22_1&utm_content=20250114)
 
 
 ```{r figure_4}
@@ -1227,11 +1230,14 @@ row2 <- plot_grid(Fig4B, Fig4C, Fig4D, ncol = 3, labels = c("B", "C", "D"))
 #row3 <- plot_grid(Fig3E, Fig3F, Fig3G, ncol = 3, labels = c("E", "F", "G"))
 g <- plot_grid(row1, row2, ncol = 1, rel_heights = c(2, 1))
 
-ggsave(filename = "figure/figure4.jpg", plot = g, device = "jpg", dpi = 600)
+ggsave(filename = "figure/figure4.jpg", 
+       plot = g, 
+       device = "jpg", 
+       dpi = 600, 
+       width = 16, 
+       height = 14) 
 ```
 
-<!-- !!! Thomas, I left this here, please check if you want to move this elsewhere. -->
-“Paradoxically, an omics gene cluster that is highly similar to gene sets in a reference database may be of lesser interest, since the cluster and its function have already been well characterized. Of greater interest are clusters of genes that have not been previously implicated, because it is precisely in these cases that new biological insights emerge. These less-studied cases may either show no statistically significant enrichment in the reference database, or they may return enrichments that are significant in terms of P value but not substantial in terms of gene set overlap. Here, an immediate next step is to explore the biological literature, as well as complementary datasets, to learn as much as possible about the genes in question. The goal is to mine knowledge pertinent to each gene and then use this knowledge to synthesize mechanistic hypotheses for a function that might be held in common by all or many genes in the set. This protracted process of discerning relevant findings from data and literature, then reasoning on this information to synthesize functional hypotheses, has not yet been widely automated but is one of the central tasks performed by a genome scientist.” Use of large language models (https://www.nature.com/articles/s41592-024-02525-x?utm_source=nmeth_etoc&utm_medium=email&utm_campaign=toc_41592_22_1&utm_content=20250114)
 
 ## Experimental network analysis using statistical methods
 
