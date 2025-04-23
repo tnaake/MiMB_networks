@@ -912,8 +912,13 @@ DMA_Res[["ShapiroTest"]][["DF"]]%>%
   kableExtra::kable_classic(full_width = F, html_font = "Cambria", font_size = 12) 
 
 
-Fig3A <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["NAT"]]
-Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]]
+Fig3A <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["NAT"]] + 
+  #ggplot2::ggtitle("Normal distribution of NAT samples") +
+  ggplot2::labs(subtitle = "39.27% of metabolites are not normally distributed based on Shapiro test.")
+
+Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]]+
+  ggplot2::labs(subtitle = "46.57% of metabolites are not normally distributed based on Shapiro test.")
+
 
 ```
 ```{r}
@@ -965,7 +970,7 @@ Res <- MetaProViz::VizVolcano(InputData=InputData,
                                SelectLab = NULL,
                                ylab ="-log10(p.adj)",
                                yCutoff = 0.1,
-                               PlotName = "t-test and adjustment using FDR")
+                               PlotName = "t-test & FDR adjustment")
 
 
 Fig3C <- Res[["Plot_Sized"]][["Plot_Sized"]]
@@ -978,7 +983,7 @@ Res <- MetaProViz::VizVolcano(InputData=InputData,
                                SelectLab = NULL,
                                ylab ="-log10(p.adj)",
                                yCutoff = 0.1,
-                               PlotName = "Wilcoxon test and adjustment using FDR")
+                               PlotName = "Wilcoxon test & FDR adjustment")
 
 
 Fig3D <- Res[["Plot_Sized"]][["Plot_Sized"]]
@@ -1008,14 +1013,15 @@ Res <- MetaProViz::VizVolcano(InputData=InputData,
                        SettingsInfo= c(color="class"),
                        SettingsFile_Metab= SettingsFile_Metab,
                        ylab ="-log10(p.adj)",
-                       yCutoff = 0.1)
+                       yCutoff = 0.1,
+                       PlotName = "Wilcoxon test & FDR adjustment")
 
 Fig3E <- Res[["Plot_Sized"]][["Plot_Sized"]]
 ```
 
 Displaying all metabolite classes on the volcano plot can make it difficult to interpret (Fig. 3d). For better visibility individual plots for each of the metabolite class can be created (Fig. 3f-h).
 ```{r}
-#| eval: false
+#| eval: true
 #| echo: false
 #| message: false
 #| warning: false
@@ -1034,7 +1040,8 @@ Res <- MetaProViz::VizVolcano(InputData=InputData ,
                        SettingsFile_Metab= SettingsFile_Metab,
                        SelectLab = NULL,
                        ylab ="-log10(p.adj)",
-                       yCutoff = 0.1)
+                       yCutoff = 0.1,
+                       PlotName = "Wilcoxon & FDR")
 
 Fig3F <- Res[["Plot_Sized"]][["Ceramides"]]
 Fig3G <- Res[["Plot_Sized"]][["Sphingolipids"]]
@@ -1190,7 +1197,8 @@ Res <- MetaProViz::VizVolcano(InputData=InputData ,
                        SettingsInfo= c(individual="Class", color="combined_label"),
                        SettingsFile_Metab= SettingsFile_Metab,
                        ylab ="-log10(p.adj)",
-                       yCutoff = 0.1)
+                       yCutoff = 0.1,
+                       PlotName = "Wilcoxon & FDR")
 
 Fig4B <- Res[["Plot_Sized"]][["Ceramides"]]
 Fig4C <- Res[["Plot_Sized"]][["Glycosylceramides"]]
