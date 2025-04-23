@@ -1290,7 +1290,7 @@ stat_adj <- imputeAssay(assay(metabolomics), "MinDet") |>
 coefs <- assay(stat_adj, "pearson_coef")[lower.tri(assay(stat_adj, "pearson_coef"))]
 df <- data.frame(coefs = coefs)
     
-png("figure/figure3_histogram_coef.png")
+png("figure/figure5_histogram_coef.png")
 ggplot(df, aes(x = coefs)) +
     geom_histogram(fill = "steelblue", color = "black" ,alpha = 0.7) +
     labs(x = "Pearson correlation coefficients", y = "frequency") +
@@ -1301,7 +1301,7 @@ dev.off()
 pvals <- assay(stat_adj, "pearson_pvalue")[lower.tri(assay(stat_adj, "pearson_pvalue"))]
 df <- data.frame(pvals = pvals)
 
-png("figure/figure3_histogram_pvalues.png")
+png("figure/figure5_histogram_pvalues.png")
 ggplot(df, aes(x = pvals)) +
     geom_histogram(fill = "#DC143C", color = "black" ,alpha = 0.7) +
     labs(x = "adjusted p-values", y = "frequency") +
@@ -1377,7 +1377,7 @@ factor1_scaled <- round(scales::rescale(V(g_keep)$Factor1, to = c(1, 100)))
 ## assign colors based on scaled Factor1 values
 V(g_keep)$color <- colors[factor1_scaled]
 
-png("figure/figure3_network_factor1.png")
+png("figure/figure5_network_factor1.png")
 graphics::layout(matrix(c(1, 2), nrow = 2), heights = c(12, 1)) 
 plot(g_keep, vertex.label = NA, vertex.size = 3, legend = TRUE)
 
@@ -1450,12 +1450,12 @@ g_keep <- add_vertex_attributes(g = g_keep, attributes = attributes_df)
 ## assign colors based on scaled Factor1 values
 V(g_keep)$color <- as.factor(V(g_keep)$infomap)
 
-png("figure/figure3_network_infomap.png")
+png("figure/figure5_network_infomap.png")
 plot(g_keep, vertex.label = NA, vertex.size = 3)
 dev.off()
 ```
 
-```{r figure_3}
+```{r figure_5}
 #| eval: true
 #| echo: false
 #| message: false
@@ -1463,10 +1463,10 @@ dev.off()
 #| results: false
 #| fig-show: hide
 ## load images
-gg_hist_coef <- image_read("figure/figure3_histogram_coef.png")
-gg_hist_pvalues <- image_read("figure/figure3_histogram_pvalues.png")
-gg_network_factor1 <- image_read("figure/figure3_network_factor1.png")
-gg_network_infomap <- image_read("figure/figure3_network_infomap.png")
+gg_hist_coef <- image_read("figure/figure5_histogram_coef.png")
+gg_hist_pvalues <- image_read("figure/figure5_histogram_pvalues.png")
+gg_network_factor1 <- image_read("figure/figure5_network_factor1.png")
+gg_network_infomap <- image_read("figure/figure5_network_infomap.png")
 
 ## convert images to ggplot objects
 gg_hist_coef <- ggdraw() + draw_image(gg_hist_coef)
@@ -1477,7 +1477,7 @@ gg_network_infomap <- ggdraw() + draw_image(gg_network_infomap)
 g <- plot_grid(gg_hist_coef, gg_hist_pvalues, 
                 gg_network_factor1, gg_network_infomap, 
      ncol = 2, rel_widths = c(1, 1), labels = "AUTO")
-ggsave(filename = "figure/figure3.jpg", plot = g, device = "jpg", dpi = 600)
+ggsave(filename = "figure/figure5.jpg", plot = g, device = "jpg", dpi = 600)
 ```
 
 
@@ -1509,4 +1509,4 @@ Figure 4:
 A) Upset plot of the metabolites IDs of the detected metabolites in the biocrates example dataset colour coded for the Biocrates defined metabolite classes.
 B-C) Volcano plots of differential analysis comparing TU versus NAT using the Wilcoxon rank-sum test and FDR adjustment, selecting for metabolite panels based on Biocrates class and colour coding for the available metabolite ID types.
 
-
+Figure 5:
