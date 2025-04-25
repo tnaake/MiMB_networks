@@ -1105,16 +1105,17 @@ Prior Knowledge (PK) is a powerful tool in omics data analysis, allowing researc
    the top or bottom of the ranked gene list, whilst ORA is based on Fisher's
    exact test and checks if a selection of upregulated features (e.g. log2FC >1,
    p.adj < 0.05) are over-represented in a specific pathway 
-   [@BadiaIMompel2022]. In a benchmark study [@BadiaIMompel2022] linear models
+   [@BadiaIMompel2022]. In a benchmark study evaluated on transcriptomic and 
+   phospho-proteomic perturbation, linear models
    (e.g. ULM, MLM, etc.) outperformed GSEA, whilst ORA performs similarly well
-   evaluated on transcriptomic and phospho-proteomic perturbation
-   experiments[@BadiaIMompel2022]. 
+   [@BadiaIMompel2022]. 
 
 ### Annotated metabolites and coverage in the prior knowledge
 
 Pathway analysis was originally developed for gene expression data. Even though 
 it was adapted to metabolomics data, it often produces misleading or 
-nonsensical results due to the unique characteristics and constraints of metabolites compared to genes [@Lee2025]. 
+nonsensical results due to the unique characteristics and constraints of 
+metabolites compared to genes [@Lee2025]. 
 
 1. Choose a database for metabolite IDs. Different to gene names, there are no
    standardized names for metabolites [@Pham2019, @Koistinen2023], 
@@ -1124,15 +1125,12 @@ nonsensical results due to the unique characteristics and constraints of metabol
    Genomes (KEGG) with KEGG IDs [@Kanehisa2017]. 
  <!-- COMMENT: Add here code-->
 
-2. Curate metabolite ID mappings. 
-<!-- COMMENT: Is curate a good name? or harmonize? -->
+2. Investigate metabolite ID mappings. 
    The database often include multiple entries for the same metabolite 
-   with different degrees of ambiguity [@Pham2019], as for example KEGG, which
-   includes entries for L-Alanine, D-Alanine and Alanine. 
-<!-- COMMENT: is the example for KEGG needed? -->
-   Experimentally different degrees of ambiguity are needed due to the machine
-   sensitivity, where for example stereoisomers are not distinguished 
-   [@Dias2016]. Yet, standard metabolite-sets used as prior knowledge often
+   with different degrees of ambiguity [@Pham2019]. Experimentally different 
+   degrees of ambiguity are needed due to the machine sensitivity, where for 
+   example stereoisomers are not distinguished [@Dias2016]. Yet, standard 
+   metabolite-sets used as prior knowledge often
    contain one specific metabolite ID, which can hinder mapping to the detected
    data [@Schmidt2025]. If metabolite detection is unspecific due to machine
    sensitivity, assign all possible metabolite IDs (Table 1) to ultimately
@@ -1140,7 +1138,24 @@ nonsensical results due to the unique characteristics and constraints of metabol
    IDs, and/or quantify ambiguities, for example by the *MetaProViz* package
    [@Schmidt2025]. 
    
-   <!-- COMMENT: Add here code-->
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+## load Biocrates IDs:
+FeatureMetadata_Biocrates <- ToyData(Data="BiocratesFeatureTable")
+
+## add IDs to our measured data
+SettingsFile_Metab <-  merge(
+    x = as.data.frame(rowData(metabolomics))[, 1:2],
+    y = FeatureMetadata_Biocrates[, c(2:3, 5, 7, 11)],
+    by.x = "feature_original",
+    by.y = "TrivialName_Prior2023",
+    all.x = TRUE)
+
+```
 
 <!-- ::: {.table} -->
 
@@ -1166,27 +1181,14 @@ Table 1: **Preview of selected metabolites to showcase ChEBI and HMDB informatio
    small subset of the detected metabolites will be included, which needs to be
    taken into consideration when interpreting the results biologically. In order
    to ensure the maximum overlap between measured metabolites and prior knowledge
-   of choice we recommend assignment of metabolite IDs to the detected
+   of choice we recommend assignment of multiple metabolite IDs dependent on the level of ambiguity to the detected
    metabolites.
-   
-   <!-- COMMENT: What does the the last sentence mean? It sounds unclear. Could you clarify? -->
    
 ```{r}
 #| eval: true
 #| echo: false
 #| message: false
 #| warning: false
-
-## load Biocrates IDs:
-FeatureMetadata_Biocrates <- ToyData(Data="BiocratesFeatureTable")
-
-## add IDs to our measured data
-SettingsFile_Metab <-  merge(
-    x = as.data.frame(rowData(metabolomics))[, 1:2],
-    y = FeatureMetadata_Biocrates[, c(2:3, 5, 7, 11)],
-    by.x = "feature_original",
-    by.y = "TrivialName_Prior2023",
-    all.x = TRUE)
 
 ## plot Upset plot: (will be updated in MetaProViz soon, as we are adding it to export)
 Plotdf <- data.frame(
@@ -1215,37 +1217,37 @@ Fig4A <- MetaProViz:::GenerateUpset(
 
 1. Choose a suitable database containing prior knowledge:
 
-- For classical mappings, obtain metabolite sets from databases such as KEGG,
-  Reactome or WikiPathways, *RaMP-DB*, *Omnipath*, *MetSigDB* 
+- For classical mappings with pathway-metabolite sets, those can be obtained from 
+  databases such as KEGG, Reactome or WikiPathways, *RaMP-DB*, *Omnipath*, *MetSigDB* 
   (*choice of user*). 
   *RaMP-DB* [@Braisted2023] has combined many classical resources trying to 
   account for mismappings between the original resources by using molecular
-  weight and has used *ClassyFire* [@DjoumbouFeunang2016] to assign chemical classes to the metabolites. 
+  weight. 
   *Omnipath* [@Türei2016, @Türei2021] a database of molecular biology prior
   knowledge combines data from more than 1000 resources and incorporates many
   database clients containing metabolites and utilities for metabolite 
-  identifier translation. These classical databases
-  mainly carry information about the metabolic pathway and the metabolites 
-  that are assigned to them. 
-
-- Chemical class-metabolite sets can be used for classical mapping to 
-  understand if certain compound classes are affected in the comparison of
+  identifier translation. Hence, apart from pathway-metabolite sets *Omnipath metabo*
+  also offers many other ontology information.
+- *RaMP-DB* [@Braisted2023] has used *ClassyFire* [@DjoumbouFeunang2016] to assign 
+  chemical classes to the metabolites based on their structural components. Chemical 
+  class-metabolite sets can be used to 
+  understand if certain compound classes are altered in the comparison of
   interest [@Braisted2023]. 
-    <!-- COMNENT: this needs more description, so this contains the map metabolite-class= -->
 - To explore signalling function of metabolites by binding 
-  to receptors, choose a database such as *MetalinksDB* [@Farr&Dimitrov2024].
+  to receptors, you can use *MetalinksDB* [@Farr&Dimitrov2024].
   *MetalinksDB* contains 
   information about metabolite-receptor and metabolite-transporter interaction,
   as well as weather the binding of the metabolite to a receptor is activating 
   or inhibiting [@Farr&Dimitrov2024]. Using *MetalinksDB* not only enables 
   combined pathway enrichment analysis on metabolite-gene sets or building 
   a network of those interactions, but also adds biological value by 
-  highlighting the signalling potential of the metabolites [@Schmidt2025].
+  highlighting the signalling potential of the metabolites [@Farr&Dimitrov2024].
   *MetaProViz* includes a collection of annotated
   metabolite sets usable for classical mapping (Metabolism Signature Database,
   *MetSigDB*), which includes classical pathway-metabolite sets, chemical
   class-metabolite sets, and *MetalinksDB* metabolite-receptor and transporter
-  sets [@Schmidt2025]. Moreover, *MetaProViz* uses the *COSMOS* enzyme-metabolic
+  sets, all adapted for classical mapping [@Schmidt2025]. Moreover, *MetaProViz* 
+  uses the *COSMOS* enzyme-metabolic
   reaction prior knowledge network [@Dugourd_2021] to convert any gene set to
   gene-metabolite sets, which can be used to perform combined enrichment 
   analysis [@Schmidt2025].
@@ -1270,9 +1272,28 @@ Fig4A <- MetaProViz:::GenerateUpset(
    genome scale metabolic models, which cover the whole reaction in an organism,
    and those models have not been adapted for the coverage in a metabolomics
    experiments. We recommend to exclude those metabolites prior to performing
-   enrichment analysis. 
-   
-   <!-- COMMENT: What is missing here are code examples. I would suggest to pick one database that is suitable for the data here and prepare the data according to 1 and 2. -->
+   enrichment analysis. *MetaProViz* has already done this and provides pathway-
+   metabolite sets without unspecific metabolites [@Schmidt2025].
+
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+#We can load prior knowledge directly from MetaProViz:
+#1. metabolite-sets
+KEGG <- MetaProViz::LoadKEGG()
+
+ChemicalClass <- MetaProViz::LoadRAMP()
+
+#2. gene-metabolite sets
+Gaude_Pathways <- MetaProViz::LoadGaude()
+Gaude_GeneMetab <- MetaProViz::Make_GeneMetabSet(Input_GeneSet=Gaude_Pathways,
+                                                     SettingsInfo=c(Target="gene"),
+                                                     PKName="Gaude")
+MetaLinksDB_Res <- MetaProViz::LoadMetalinks()
+```
 
 ### Biological interpretation of the results
 
