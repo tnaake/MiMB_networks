@@ -1221,9 +1221,7 @@ Fig4A <- MetaProViz:::GenerateUpset(
   (*choice of user*). 
   *RaMP-DB* [@Braisted2023] has combined many classical resources trying to 
   account for mismappings between the original resources by using molecular
-  weight and has used *ClassyFire* to assign chemical classes to the 
-  metabolites. 
-<!-- COMMENT: cite ClassiFire -->
+  weight and has used *ClassyFire* [@DjoumbouFeunang2016] to assign chemical classes to the metabolites. 
   *Omnipath* [@Türei2016, @Türei2021] a database of molecular biology prior
   knowledge combines data from more than 1000 resources and incorporates many
   database clients containing metabolites and utilities for metabolite 
