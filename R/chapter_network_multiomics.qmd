@@ -1209,7 +1209,6 @@ Fig4A <- MetaProViz:::GenerateUpset(
     output_file = NULL)
 ```
 
-
 4. Given the incomplete coverage in mass spectrometry-based metabolomics and hence the potential low coverage of the prior knowledge, adjust the choice of statistical tests. For metabolomics, methods such as ORA should generally perform well since the method offers the ability to restrict the background to the detected metabolites (assay-specific background) [@Wieder2021].
 
 ### Available prior knowledge for metabolites
@@ -1413,7 +1412,7 @@ stat_adj <- imputeAssay(assay(metabolomics), "MinDet") |>
         p.adjust = "BH")
 ```
 
-3.  Examine the distribution of similarity coefficients and p-values, if available.
+3.  Examine the distribution of similarity coefficients and p-values, if available (Figure A and B).
 
 ```{r}
 #| eval: true
@@ -1489,7 +1488,7 @@ V_keep <- names(components_g$membership)[
 g_keep <- induced_subgraph(g, V_keep)
 ```
 
-5.  Visualize network. Results from upstream analyses can be mapped to the network. As an example, the weights of latent factor 1 of the trained MOFA model can be used for colouring of the network vertices. Alternatively, we can use logFC of the differential expression analysis.
+5.  Visualize network. Results from upstream analyses can be mapped to the network. As an example, the weights of latent factor 1 of the trained MOFA model can be used for colouring of the network vertices (Figure 5 C). Alternatively, we can use logFC of the differential expression analysis.
 
 ```{r network_visualisation}
 #| eval: true
@@ -1530,7 +1529,7 @@ image.plot(legend.only = TRUE, add = FALSE, legend.lab = "MOFA Factor1 values",
 dev.off()
 ```
 
-6.  Choose and apply module determination algorithm (*choice of user*). To detect substructures in the graph, module determination algorithms can be applied on the graph. Common algorithms are (*igraph* implementation in brackets, see Table 1 for further details):
+6.  Choose and apply module determination algorithm (*choice of user*). To detect substructures in the graph, module determination algorithms can be applied on the graph and visualize the results (Figure 5 D). Common algorithms are (*igraph* implementation in brackets, see Table 1 for further details):
 - *Community structure detection based on edge betweenness* (*cluster_edge_betweenness*) detects communities by iteratively removing edges with the highest betweenness centrality, splitting the network into distinct modules. It works well for small graphs, provides a clear hierarchical structure. The algorithm may be computationally expensive for large networks.
 - *Community structure detection via greedy optimization of modularity* (*cluster_fast_greedy*) uses hierarchical agglomeration to merge vertices into communities, optimizing the modularity at each step. The algorithm works efficiently for large graphs, but 
 is less effective for networks with overlapping communities.
