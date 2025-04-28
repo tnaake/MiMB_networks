@@ -895,7 +895,6 @@ DMA_Res <- MetaProViz::DMA(
 ```
 
 
-
 ```{r}
 #| eval: true
 #| echo: false
@@ -1113,8 +1112,8 @@ Prior Knowledge (PK) is a powerful tool in omics data analysis, allowing researc
    basket size. The choice of ranking by log2FC versus ranking by t-value, which 
    is a combination of change and statistics, will alter the GSEA results.
 
-Here it will be crucial to understand if performing classical enrichment analysis 
-will be beneficial for the biological question at hand. Metabolites are not genes, 
+Yet, it is relevant to decide if performing enrichment analysis will be 
+able to answer the biological question at hand. Metabolites are not genes, 
 which means if a pathway is up-regulated in the context of genes, all the genes 
 involved in that pathway produce more copies, whilst metabolite levels show lower 
 coherence during regulation since the up-regulation may increase the abundance of 
@@ -1380,10 +1379,6 @@ Fig4D <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 5. Understand the impact of metabolite set inflation and deflation on the results. Due to the different metabolite ID types in combination with the metabolite ID coverage in metabolite sets, it sometimes is required to translate metabolite IDs from one identifier type to another. For example, in the Biocrates example data no KEGG IDs are available, yet, if KEGG pathways are used for enrichment analysis, either the KEGG pathways or the metabolite IDs of the data have to be translated, which can lead to one-to-none, one-to-one, one-to-many and many-to-many mappings between the metabolite ID types. This mapping ambiguity can lead to inflation or deflation of the metabolite set size, which needs to be taken into account when interpreting the results. In case of combined enrichment analysis for multiple modalities, take into account the difference in feature space between metabolomics and transcriptomics/proteomics, since this can underestimate the altered metabolites.
 
 6. Take into account the statistical method used for enrichment analysis as it impacts the interpretation of the results (see discussion above).
-
-7. Understand if performing enrichment analysis will be beneficial for the biological question at hand. Since classical pathway analysis was originally developed to analyse high-throughput gene expression data, yet metabolites are not genes [@Lee2025]. In general, when a pathway is up-regulated in the context of genes, all the genes involved in that pathway produce more copies, whilst metabolite levels show lower coherence during regulation since the up-regulation may increase the abundance of the end-product but not of the metabolite intermediates[@Lee2025]. Moreover, pathway enrichment results from metabolite measurements in urine or blood plasma can not be directly interpreted as altered pathway biosynthesis, since the enzymes required for many pathways are not present and it is rather to be thought that these metabolites were released into those fluids from organs or blood cells [@Lee2025]. Here it is also relevant to consider that the origin of the pathways is based on well-established characterization, which has been discussed to hinder novel biological insights [@Hu_2025]. Hence, we would recommend to always perform literature searches for the top/bottom altered metabolites, especially if they are not well studied. Noteworthy, beyond metabolic pathways, metabolites play an active role in gene-regulation by for example binding to receptors and elucidating signalling cascades [@Baker_2023, @Farr&Dimitrov2024].
-
-<!-- COMMENT: Should point 7. be moved to above and combined with the discussions above? There are not so many points and many of this has been said, but in general takes a lot of space-->
 
 ```{r}
 #| eval: true
