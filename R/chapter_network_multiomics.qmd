@@ -1105,16 +1105,38 @@ Prior Knowledge (PK) is a powerful tool in omics data analysis, allowing researc
    the top or bottom of the ranked gene list, whilst ORA is based on Fisher's
    exact test and checks if a selection of upregulated features (e.g. log2FC >1,
    p.adj < 0.05) are over-represented in a specific pathway 
-   [@BadiaIMompel2022]. In a benchmark study [@BadiaIMompel2022] linear models
+   [@BadiaIMompel2022]. In a benchmark study evaluated on transcriptomic and 
+   phospho-proteomic perturbation, linear models
    (e.g. ULM, MLM, etc.) outperformed GSEA, whilst ORA performs similarly well
-   evaluated on transcriptomic and phospho-proteomic perturbation
-   experiments[@BadiaIMompel2022]. 
+   [@BadiaIMompel2022]. Here it is also important to note that the chosen thresholds 
+   for e.g. up-regulated metabolites will affect the ORA results as it affects the 
+   basket size. The choice of ranking by log2FC versus ranking by t-value, which 
+   is a combination of change and statistics, will alter the GSEA results.
+
+Here it will be crucial to understand if performing classical enrichment analysis 
+will be beneficial for the biological question at hand. Metabolites are not genes, 
+which means if a pathway is up-regulated in the context of genes, all the genes 
+involved in that pathway produce more copies, whilst metabolite levels show lower 
+coherence during regulation since the up-regulation may increase the abundance of 
+the end-product but not of the metabolite intermediates[@Lee2025]. Hence, pathway 
+analysis in metabolomics can produce misleading or nonsensical results due to the 
+unique characteristics and constraints of metabolites compared to genes [@Lee2025]. 
+Moreover, pathway enrichment results from metabolite measurements in urine or blood plasma 
+can not be directly interpreted as altered pathway biosynthesis, since the enzymes 
+required for many pathways are not present and it is rather to be thought that these 
+metabolites were released into those fluids from organs or blood cells [@Lee2025]. 
+Here it is also relevant to consider that the origin of the pathways is based on 
+well-established characterization, which has been discussed to hinder novel biological 
+insights [@Hu_2025]. Hence, we would recommend to always perform literature searches 
+for the top/bottom altered metabolites, especially if they are not well studied. 
+It is also important to take into account that beyond metabolic pathways, metabolites 
+play an active role in gene-regulation by for example binding to receptors and 
+elucidating signalling cascades [@Baker_2023, @Farr&Dimitrov2024].
 
 ### Annotated metabolites and coverage in the prior knowledge
 
-Pathway analysis was originally developed for gene expression data. Even though 
-it was adapted to metabolomics data, it often produces misleading or 
-nonsensical results due to the unique characteristics and constraints of metabolites compared to genes [@Lee2025]. 
+There are different points to consider when integrating metabolomics data with 
+prior knowledge, which can be divided in several steps:
 
 1. Choose a database for metabolite IDs. Different to gene names, there are no
    standardized names for metabolites [@Pham2019, @Koistinen2023], 
@@ -1122,17 +1144,13 @@ nonsensical results due to the unique characteristics and constraints of metabol
    metabolite ID to each entry, as for example, the Human Metabolome Database
    (HMDB) with HMDB IDs [@Wishart_2007] or the Kyoto Encyclopedia of Genes and
    Genomes (KEGG) with KEGG IDs [@Kanehisa2017]. 
- <!-- COMMENT: Add here code-->
 
-2. Curate metabolite ID mappings. 
-<!-- COMMENT: Is curate a good name? or harmonize? -->
+2. Investigate metabolite ID mappings. 
    The database often include multiple entries for the same metabolite 
-   with different degrees of ambiguity [@Pham2019], as for example KEGG, which
-   includes entries for L-Alanine, D-Alanine and Alanine. 
-<!-- COMMENT: is the example for KEGG needed? -->
-   Experimentally different degrees of ambiguity are needed due to the machine
-   sensitivity, where for example stereoisomers are not distinguished 
-   [@Dias2016]. Yet, standard metabolite-sets used as prior knowledge often
+   with different degrees of ambiguity [@Pham2019]. Experimentally different 
+   degrees of ambiguity are needed due to the machine sensitivity, where for 
+   example stereoisomers are not distinguished [@Dias2016]. Yet, standard 
+   metabolite-sets used as prior knowledge often
    contain one specific metabolite ID, which can hinder mapping to the detected
    data [@Schmidt2025]. If metabolite detection is unspecific due to machine
    sensitivity, assign all possible metabolite IDs (Table 1) to ultimately
@@ -1140,7 +1158,24 @@ nonsensical results due to the unique characteristics and constraints of metabol
    IDs, and/or quantify ambiguities, for example by the *MetaProViz* package
    [@Schmidt2025]. 
    
-   <!-- COMMENT: Add here code-->
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+## load Biocrates IDs:
+FeatureMetadata_Biocrates <- ToyData(Data="BiocratesFeatureTable")
+
+## add IDs to our measured data
+SettingsFile_Metab <-  merge(
+    x = as.data.frame(rowData(metabolomics))[, 1:2],
+    y = FeatureMetadata_Biocrates[, c(2:3, 5, 7, 11)],
+    by.x = "feature_original",
+    by.y = "TrivialName_Prior2023",
+    all.x = TRUE)
+
+```
 
 <!-- ::: {.table} -->
 
@@ -1166,27 +1201,14 @@ Table 1: **Preview of selected metabolites to showcase ChEBI and HMDB informatio
    small subset of the detected metabolites will be included, which needs to be
    taken into consideration when interpreting the results biologically. In order
    to ensure the maximum overlap between measured metabolites and prior knowledge
-   of choice we recommend assignment of metabolite IDs to the detected
+   of choice we recommend assignment of multiple metabolite IDs dependent on the level of ambiguity to the detected
    metabolites.
-   
-   <!-- COMMENT: What does the the last sentence mean? It sounds unclear. Could you clarify? -->
    
 ```{r}
 #| eval: true
 #| echo: false
 #| message: false
 #| warning: false
-
-## load Biocrates IDs:
-FeatureMetadata_Biocrates <- ToyData(Data="BiocratesFeatureTable")
-
-## add IDs to our measured data
-SettingsFile_Metab <-  merge(
-    x = as.data.frame(rowData(metabolomics))[, 1:2],
-    y = FeatureMetadata_Biocrates[, c(2:3, 5, 7, 11)],
-    by.x = "feature_original",
-    by.y = "TrivialName_Prior2023",
-    all.x = TRUE)
 
 ## plot Upset plot: (will be updated in MetaProViz soon, as we are adding it to export)
 Plotdf <- data.frame(
@@ -1215,41 +1237,40 @@ Fig4A <- MetaProViz:::GenerateUpset(
 
 1. Choose a suitable database containing prior knowledge:
 
-- For classical mappings, obtain metabolite sets from databases such as KEGG,
-  Reactome or WikiPathways, *RaMP-DB*, *Omnipath*, *MetSigDB* 
-  (*choice of user*). 
-  *RaMP-DB* [@Braisted2023] has combined many classical resources trying to 
+- For classical mappings with metabolite sets, those can be obtained from 
+  databases such as KEGG, Reactome or WikiPathways, *RaMP-DB*, *Omnipath*, *MetSigDB* 
+  (*choice of user*): 
+  a) *RaMP-DB* [@Braisted2023] has combined many classical resources trying to 
   account for mismappings between the original resources by using molecular
-  weight and has used *ClassyFire* [@DjoumbouFeunang2016] to assign chemical classes to the metabolites. 
-  *Omnipath* [@Türei2016, @Türei2021] a database of molecular biology prior
+  weight. Apart from classical pathway-metabolite sets such as wikipathways, *RaMP-DB* [@Braisted2023] 
+  has used *ClassyFire* [@DjoumbouFeunang2016] to assign 
+  chemical classes to the metabolites based on their structural components. Chemical 
+  class-metabolite sets can be used to 
+  understand if certain compound classes are altered in the comparison of
+  interest [@Braisted2023]. 
+  b) *Omnipath* [@Türei2016, @Türei2021] a database of molecular biology prior
   knowledge combines data from more than 1000 resources and incorporates many
   database clients containing metabolites and utilities for metabolite 
-  identifier translation. These classical databases
-  mainly carry information about the metabolic pathway and the metabolites 
-  that are assigned to them. 
-
-- Chemical class-metabolite sets can be used for classical mapping to 
-  understand if certain compound classes are affected in the comparison of
-  interest [@Braisted2023]. 
-    <!-- COMNENT: this needs more description, so this contains the map metabolite-class= -->
-- To explore signalling function of metabolites by binding 
-  to receptors, choose a database such as *MetalinksDB* [@Farr&Dimitrov2024].
-  *MetalinksDB* contains 
-  information about metabolite-receptor and metabolite-transporter interaction,
-  as well as weather the binding of the metabolite to a receptor is activating 
+  identifier translation. Hence, apart from pathway-metabolite sets *Omnipath metabo*
+  also offers many other ontology information.
+  c) To explore signalling function of metabolites by binding 
+  to receptors, you can use *MetalinksDB* [@Farr&Dimitrov2024].
+  *MetalinksDB* contains information about metabolite-receptor and metabolite-transporter 
+  interaction, as well as weather the binding of the metabolite to a receptor is activating 
   or inhibiting [@Farr&Dimitrov2024]. Using *MetalinksDB* not only enables 
   combined pathway enrichment analysis on metabolite-gene sets or building 
   a network of those interactions, but also adds biological value by 
-  highlighting the signalling potential of the metabolites [@Schmidt2025].
-  *MetaProViz* includes a collection of annotated
+  highlighting the signalling potential of the metabolites [@Farr&Dimitrov2024].
+  d) *MetaProViz* includes a collection of annotated
   metabolite sets usable for classical mapping (Metabolism Signature Database,
   *MetSigDB*), which includes classical pathway-metabolite sets, chemical
   class-metabolite sets, and *MetalinksDB* metabolite-receptor and transporter
-  sets [@Schmidt2025]. Moreover, *MetaProViz* uses the *COSMOS* enzyme-metabolic
+  sets, all adapted for classical mapping [@Schmidt2025]. Moreover, *MetaProViz* 
+  uses the *COSMOS* enzyme-metabolic
   reaction prior knowledge network [@Dugourd_2021] to convert any gene set to
   gene-metabolite sets, which can be used to perform combined enrichment 
   analysis [@Schmidt2025].
-- When working with human data, the prior knowledge network 
+  e) When working with human data, the prior knowledge network 
   *ocean* includes a manually curated reduced model of human metabolism based 
   on redHUMAN of Recon3D and has developed a specific adaptation of the 
   weighted mean, using enzyme distance to weight interaction, to perform
@@ -1257,7 +1278,7 @@ Fig4A <- MetaProViz:::GenerateUpset(
   deregulations of metabolite abundances to generate a metabolic footprint for
   each metabolic enzyme and ultimately define enzymatic bottlenecks
   [@Sciacovelli&Dugourd2022].
-- If no metabolomics data are available, but the focus is still on metabolic
+  f) If no metabolomics data are available, but the focus is still on metabolic
   pathways, use the gene-sets generated by @Gaude2016, which include metabolic
   enzymes and enable weighting for enzymes that are unique for a pathway 
   compared to enzymes present in multiple pathways.
@@ -1270,9 +1291,28 @@ Fig4A <- MetaProViz:::GenerateUpset(
    genome scale metabolic models, which cover the whole reaction in an organism,
    and those models have not been adapted for the coverage in a metabolomics
    experiments. We recommend to exclude those metabolites prior to performing
-   enrichment analysis. 
-   
-   <!-- COMMENT: What is missing here are code examples. I would suggest to pick one database that is suitable for the data here and prepare the data according to 1 and 2. -->
+   enrichment analysis. *MetaProViz* has already done this and provides pathway-
+   metabolite sets without unspecific metabolites [@Schmidt2025].
+
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+
+#We can load prior knowledge directly from MetaProViz:
+#1. metabolite-sets
+KEGG <- MetaProViz::LoadKEGG()
+
+ChemicalClass <- MetaProViz::LoadRAMP()
+
+#2. gene-metabolite sets
+Gaude_Pathways <- MetaProViz::LoadGaude()
+Gaude_GeneMetab <- MetaProViz::Make_GeneMetabSet(Input_GeneSet=Gaude_Pathways,
+                                                     SettingsInfo=c(Target="gene"),
+                                                     PKName="Gaude")
+MetaLinksDB_Res <- MetaProViz::LoadMetalinks()
+```
 
 ### Biological interpretation of the results
 
@@ -1339,9 +1379,7 @@ Fig4D <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 
 5. Understand the impact of metabolite set inflation and deflation on the results. Due to the different metabolite ID types in combination with the metabolite ID coverage in metabolite sets, it sometimes is required to translate metabolite IDs from one identifier type to another. For example, in the Biocrates example data no KEGG IDs are available, yet, if KEGG pathways are used for enrichment analysis, either the KEGG pathways or the metabolite IDs of the data have to be translated, which can lead to one-to-none, one-to-one, one-to-many and many-to-many mappings between the metabolite ID types. This mapping ambiguity can lead to inflation or deflation of the metabolite set size, which needs to be taken into account when interpreting the results. In case of combined enrichment analysis for multiple modalities, take into account the difference in feature space between metabolomics and transcriptomics/proteomics, since this can underestimate the altered metabolites.
 
-6. Understand how the choice of the statistical method used for enrichment analysis influences the interpretation of the results (see discussion above). Here it is also important to note that the chosen thresholds for e.g. up-regulated metabolites will affect the ORA results as it affects the basket size. The choice of ranking by log2FC versus ranking by t-value, which is a combination of change and statistics, will alter the GSEA results.
-
-<!-- COMMENT: Should point 6. be moved to above? -->
+6. Take into account the statistical method used for enrichment analysis as it impacts the interpretation of the results (see discussion above).
 
 7. Understand if performing enrichment analysis will be beneficial for the biological question at hand. Since classical pathway analysis was originally developed to analyse high-throughput gene expression data, yet metabolites are not genes [@Lee2025]. In general, when a pathway is up-regulated in the context of genes, all the genes involved in that pathway produce more copies, whilst metabolite levels show lower coherence during regulation since the up-regulation may increase the abundance of the end-product but not of the metabolite intermediates[@Lee2025]. Moreover, pathway enrichment results from metabolite measurements in urine or blood plasma can not be directly interpreted as altered pathway biosynthesis, since the enzymes required for many pathways are not present and it is rather to be thought that these metabolites were released into those fluids from organs or blood cells [@Lee2025]. Here it is also relevant to consider that the origin of the pathways is based on well-established characterization, which has been discussed to hinder novel biological insights [@Hu_2025]. Hence, we would recommend to always perform literature searches for the top/bottom altered metabolites, especially if they are not well studied. Noteworthy, beyond metabolic pathways, metabolites play an active role in gene-regulation by for example binding to receptors and elucidating signalling cascades [@Baker_2023, @Farr&Dimitrov2024].
 
