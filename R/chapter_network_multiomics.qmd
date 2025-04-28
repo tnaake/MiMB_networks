@@ -1638,16 +1638,19 @@ D: Matrix of Euclidean distances between samples of transformed data.
 E: PCA of raw data. F: PCA of transformed data. Log-transformation increases
 variation on prinpical component 1 and 2.
 
-Figure 2:
+Figure 2: Multi-omics factor analysis diagnostic and loading plots.
+A: Correlation of Factor values across Factors 1-5. 
+B: Variance explained for metabolomics and proteomics layers along Factors 1-5.
+C: Correlation of MOFA factors with metadata.
+D: Scatterplot of factor values for each samples for Factor 1 and Factor 2. Factor 1 separates the samples along the axis NAT-TU.
+E: Factor loadings for Factor 1 for metabolomics layer. Shown are the metabolites with the top 10 absolute loadings.
+F: 
+
 
 Figure 3: One-versus-one differential expression analysis between tumour (TU) versus normal adjacent tumour (NAT). 
 A: Data distribution for each metabolite abundance of NAT
 B: Data distribution for each metabolite abundance of TU. The Shapiro test results shows that the majority of the metabolites follow mostly a normal distribution, which means it is appropriate to perform a t-test. It is important to note that almost half of the metabolites are not normally distributed, which means that the t-test may not be appropriate for these metabolites. In this case, it might be better to use a non-parametric test such as the Wilcoxon rank-sum test or Kruskal-Wallis test.
 C-H: Volcano plots of differential analysis comparing TU versus NAT using either the t-test and FDR adjustment (C) or the Wilcoxon rank-sum test and FDR adjustment (D-H). E is colour-coded based on the metabolite class as defined by Biocrates, whilst F-H) are selected metabolite panels based on Biocrates class.
-
-
- 
-
 
 Figure 4:
 A: Upset plot of the metabolites IDs of the detected metabolites in the Biocrates example dataset colour coded for the Biocrates defined metabolite classes.
