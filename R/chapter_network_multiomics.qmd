@@ -1110,7 +1110,11 @@ Prior Knowledge (PK) is a powerful tool in omics data analysis, allowing researc
    [@BadiaIMompel2022]. Here it is also important to note that the chosen thresholds 
    for e.g. up-regulated metabolites will affect the ORA results as it affects the 
    basket size. The choice of ranking by log2FC versus ranking by t-value, which 
-   is a combination of change and statistics, will alter the GSEA results.
+   is a combination of change and statistics, will alter the GSEA results. Dependent
+   on other available analysis, such as MOFA or PCA, the ranking of features can also
+   be done using those outputs. Similarly, using the MOFA results created above, one
+   can also define the top and bottom 20% of altered features, which in turn can
+   be used to perfrom ORA.
 
 Yet, it is relevant to decide if performing enrichment analysis will be 
 able to answer the biological question at hand. Metabolites are not genes, 
