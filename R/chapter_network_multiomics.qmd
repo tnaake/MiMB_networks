@@ -1655,11 +1655,9 @@ ggsave(filename = "figure/figure5.jpg", plot = g, device = "jpg", dpi = 600)
 
 # Conclusion
 
-This chapter demonstrated how to perform metabolomics data analysis in *R* using network-based approaches. By integrating tools for preprocessing, differential analysis, pathway and correlation analysis, and data integration, *R* provides a comprehensive framework for deriving biological insights from metabolomics and proteomics datasets. Parameters such as thresholds, normalization methods, and correction techniques must be carefully chosen to ensure the robustness and reliability of the results. 
+This chapter demonstrated how to perform metabolomics data analysis in *R* using prior knowledge in combination with enrichment analysis or network-based approaches. By integrating tools for preprocessing, differential analysis, enrichment and correlation analysis, and data integration, *R* provides a comprehensive framework for deriving biological insights from metabolomics datasets and combine them with other omics such as proteomics. Parameters such as thresholds, normalization methods, and correction techniques must be carefully chosen to ensure the robustness and reliability of the results. 
 
 In order to interpret a metabolomics experiment in its entirety, it is important to understand the limitations of the prior knowledge used, the coverage of the experimental data in the prior knowledge resource, the impact of metabolite set inflation and deflation on the results and the choice of statistical method used for enrichment analysis. Researchers should not solely rely on pathway analysis and often it is more beneficial to perform literature searches for the most altered metabolites, extract metabolite receptors that could be targeted by the altered metabolites or transporters that could release the metabolites into the environment. All of this will require close collaboration between data scientists and experimentalists in the future.
-
-<!-- COMMENT: adjust the Conclusion -->
 
 # References
 
