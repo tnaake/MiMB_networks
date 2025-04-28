@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+*.log
+/R/chapter_network_multiomics_files
+/R/MetaProViz_Results
