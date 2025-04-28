@@ -112,7 +112,7 @@ if (!require("xlsx", quietly = TRUE))
 ```
 
 # Introduction
-<!-- # Introduction to metabolomics and proteomics pathway and network analysis -->
+<!-- # Introduction to metabolomics data analysis trough integrating with prior knowledge, proteomics data and performing network analysis -->
 
 Networks provide a powerful framework to study metabolomics and proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, biosynthetic enzymes) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase the statistical programming language R's extensive ecosystem for metabolomics, proteomics and network analysis analysis, including packages like *igraph* [@Csardi2006], *MOFA* [@Argelaguet2018], and *decoupleR* [@BadiaIMompel2022]. Multi-omics factor analysis (MOFA), a statistical technique to identify latent factors of shared variation in multi-omics datasets, is used to integrate multiple data modalities that share the same sample set. We will use the results from the MOFA model to guide downstream analysis in pathway and network analysis. *decoupleR* uses biological signatures to calculate scores based on prior knowledge, offering the interpretation of the datasets by known biological networks and pathways.
 
