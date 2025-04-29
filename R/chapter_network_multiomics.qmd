@@ -9,6 +9,7 @@ author:
       - name: European Molecular Biology Laboratory, Meyerhofstrasse 1, 69117 Heidelberg, Germany
       - name: European Molecular Biology Laboratory, Notkestrasse 85, 22607 Hamburg, Germany
 bibliography: bibliography.bib
+prefer-html: true
 format: docx
 editor_options: 
   chunk_output_type: console
@@ -60,6 +61,11 @@ library("ggplotify")
 if (!require("igraph", quietly = TRUE))
     BiocManager::install("igraph")
 library("igraph")
+
+## kableExtra
+if (!require("kableExtra", quietly = TRUE))
+    BiocManager::install("kableExtra")
+library("kableExtra")
 
 ## magick
 if (!require("magick", quietly = TRUE))
@@ -782,11 +788,11 @@ gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
 
 ```{r mofa_plot_top_weights}
 #| eval: true
-#| echo: true
-#| message: true
+#| echo: false
+#| message: false
 #| warning: false
 #| results: false
-##| fig-show: hide
+#| fig-show: hide
 
 png("figure/figure2_top_weights.png", width = 1500, height = 1500, res = 300)
 plot_top_weights(MOFAobject,
@@ -967,17 +973,17 @@ DMA_Res_wilcox <- MetaProViz::DMA(
 
 # data table inspection
 DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
-  as.data.frame() |>
-  dplyr::select(1,23:28) |>
-  dplyr::arrange(p.adj) |>
-  dplyr::slice(1:10) |>
-  kableExtra::kbl(caption = "DMA results Tumour versus Normal.") |>
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria", font_size = 12) 
+    as.data.frame() |>
+    dplyr::select(1,23:28) |>
+    dplyr::arrange(p.adj) |>
+    dplyr::slice(1:10) |>
+    kableExtra::kbl(caption = "DMA results Tumour versus Normal.") |>
+    kableExtra::kable_classic(full_width = F, html_font = "Cambria", font_size = 12) 
 
 # Volcano plots
 ## 1. t.test
 InputData <- DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
-  tibble::column_to_rownames("Metabolite")
+    tibble::column_to_rownames("Metabolite")
 
 Res <- MetaProViz::VizVolcano(
     InputData = InputData,
@@ -1187,24 +1193,6 @@ SettingsFile_Metab <-  merge(
     all.x = TRUE)
 
 ```
-
-<!-- ::: {.table} -->
-
-Table 1: **Preview of selected metabolites to showcase ChEBI and HMDB information provided by Biocrates. Biocrates results provide all possible identifiers for each trivial metabolite name. For some metabolites multiple ChEBI and HMDB IDs are available, whilst for other metabolite those databases have no entry.** 
-
-| Trivial Name                | Class             | ChEBI                     | HMDB                    |
-|-----------------------------|-------------------|---------------------------|-------------------------|
-| *Ala*                       |Aminoacids         |15570, 16449, 16977, 76050 |HMDB0000161, HMDB0001310 |
-| *C0*                        |Acylcarnitines     |11060, 16347, 17126        |HMDB0000062              |
-| *Cer d16:1/18:0*            |Ceramides          |None                       |None                     |
-| *DG 16:0_20:3*              |Diacylglycerols    |84402                      |HMDB0007111              |
-
-
-: width="100%"
-
-: tbl-colwidths="28,17,17,21,17"
-
-<!-- ::: -->
 
 3. Visualize the available metabolite IDs for the detected 
    metabolites using an upset plot  and check available metabolite ID
@@ -1596,32 +1584,6 @@ is less effective for networks with overlapping communities.
 - *Community structure detection based on statistical mechanics* (*cluster_spinglass*) models community detection as an energy minimization problem via a spin-glass model and simulated annealing. The algorithm is computationally expensive for large networks and may be sensitive to parameter settings.
 - *Community structure detection based on short random walks* (*cluster_walktrap*) simulates random walks on the network to detect community structure, assuming vertices within the same community are more likely to be visited in one walk. The algorithm may be slow for large networks.
 
-
-<!-- ::: {.table} -->
-
-Table 2: **Compatibility of community detection algorithms with network properties** 
-
-| algorithm                   | undirected   | directed     | unweighted   | weighted     |
-|-----------------------------|--------------|--------------|--------------|--------------|
-| *cluster_edge_betweenness*  |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
-| *cluster_fast_greedy*       |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
-| *cluster_fluid_communities* |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|  $$\times$$  |
-| *cluster_infomap*           |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
-| *cluster_label_prop*        |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
-| *cluster_leading_eigen*     |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
-| *cluster_leiden*            |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
-| *cluster_louvain*           |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
-| *cluster_optimal*           |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
-| *cluster_spinglass*         |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
-| *cluster_walktrap*          |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|  
-
-: width="100%"
-
-: tbl-colwidths="28,17,17,21,17"
-
-<!-- ::: -->
-
-
 ```{r network_cluster}
 #| eval: true
 #| echo: false
@@ -1712,3 +1674,55 @@ B: Histogram of corresponding adjusted p-values of Pearson correlation-based net
 C: Thresholded network based on Pearson and Spearman correlation. Each node represents a metabolite and is colored according to its MOFA Factor 1 loading. Edges were retained if the
 absolute correlation coefficient was > 0.8 (Pearson) and > 0.7 (Spearman), with corresponding adjusted p-values < 0.05 using the Benjamini-Hochberg method.
 D: Thresholded network based on Pearson and Spearman correlation. Nodes represent metabolites and are colored according by community membership based on the Infomap community detection algorithm. 
+
+
+
+```{r table_metabolites_chebi_hmdb}
+## create the table
+df <- tribble(
+  ~`Trivial Name`, ~Class, ~ChEBI, ~HMDB,
+  "*Ala*",            "Aminoacids",      "15570, 16449, 16977, 76050", "HMDB0000161, HMDB0001310",
+  "*C0*",             "Acylcarnitines",  "11060, 16347, 17126",        "HMDB0000062",
+  "*Cer d16:1/18:0*", "Ceramides",       "None",                       "None",
+  "*DG 16:0_20:3*",   "Diacylglycerols", "84402",                      "HMDB0007111")
+
+## create and render the table with kableExtra
+kbl(df, format = "pandoc", 
+    caption = "Table 1: **Preview of selected metabolites to showcase ChEBI and HMDB information provided by Biocrates. Biocrates results provide all possible identifiers for each trivial metabolite name. For some metabolites multiple ChEBI and HMDB IDs are available, whilst for other metabolites those databases have no entry.**", escape = FALSE
+) |>
+  kable_styling(full_width = TRUE) |>
+  column_spec(1, width = "4cm") |>  # Trivial Name column
+  column_spec(2, width = "3cm") |>  # Class column
+  column_spec(3, width = "4cm") |>  # ChEBI column
+  column_spec(4, width = "4cm")     # HMDB column
+```
+
+```{r table_community_detection}
+#| eval: true
+#| echo: false
+
+## create the table
+df <- tribble(
+  ~algorithm, ~undirected, ~directed, ~unweighted, ~weighted,
+  "*cluster_edge_betweenness*",  "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$",
+  "*cluster_fast_greedy*",       "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$",
+  "*cluster_fluid_communities*", "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\times$$",
+  "*cluster_infomap*",           "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$",
+  "*cluster_label_prop*",        "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$",
+  "*cluster_leading_eigen*",     "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$",
+  "*cluster_leiden*",            "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$",
+  "*cluster_louvain*",           "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$",
+  "*cluster_optimal*",           "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$",
+  "*cluster_spinglass*",         "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$",
+  "*cluster_walktrap*",          "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$"
+)
+
+## render the table
+kbl(df, format = "pandoc", 
+    caption = "Table 2: **Compatibility of community detection algorithms with network properties**",
+    escape = FALSE
+  ) |>
+      kable_styling(full_width = TRUE) |>
+      column_spec(column = 1, width = "6 cm") |> ## algorithm column wider
+      column_spec(column = 2:5, width = "2 cm")  ## other columns narrower
+```
