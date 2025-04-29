@@ -595,7 +595,7 @@ MOFAobject <- prepare_mofa(
 ## initialize MOFA model
 #reticulate::py_install("mofapy2")
 MOFAobject <- run_mofa(MOFAobject, 
-    use_basilisk = FALSE)
+                       use_basilisk = FALSE)
 ```
 
 4.  Inspect the sanity of the model output. Plot data overview and verify that the dimensions for each dataset are as expected. Calculate the correlation scores between the factors (Figure 2 A). The correlation coefficients between the factors should be low, indicating that each factor captures distinct variation in the data. If factors are found to be highly correlated, it may suggest that the model is not effectively separating the variation across the datasets. In such cases, consider reducing the number of trained factors. This will not only help in improving the interpretability of the model but also enhance the biological relevance of the factors by focusing on more distinct sources of variation.
@@ -1337,8 +1337,8 @@ The biological interpretation of the results is crucial and should be done in th
 #| warning: false
 #| results: false
 #| fig.show: "hide"
-
-InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
+  
+  DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
   tibble::column_to_rownames("Metabolite") |>
   dplyr::filter(class %in% c("Ceramides", "Triacylglycerols", "Glycosylceramides"))
                     
@@ -1385,6 +1385,7 @@ Fig4D <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 
 6. Take into account the statistical method used for enrichment analysis as it impacts the interpretation of the results (see discussion above).
 
+
 ```{r}
 #| eval: true
 #| echo: false
@@ -1392,9 +1393,33 @@ Fig4D <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 #| warning: false
 #| results: false
 
-# Example MetalinksDB to combine with proteomics
+# Combine the differential results with the metabolite IDs:
+InputData <- merge(
+    x = DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]],
+    y = SettingsFile_Metab,
+    by.x = "Metabolite",
+    by.y = "feature",
+    all.x = TRUE)
 
+#Expand the metabolite IDs:
+DetectedIDs <- InputData|>
+  dplyr::select("Metabolite", "HMDB")|>
+  tidyr::drop_na()|>
+      mutate(row_id = dplyr::row_number())|>
+      mutate("OriginalEntry_InputData":= !!sym("HMDB")) |> # Store original values
+      tidyr::separate_rows("HMDB", sep = ",\\s*")|>
+      group_by(row_id) |>
+      mutate("OriginalEntry_InputData" := paste0("InputData_", dplyr::cur_group_id())) |>
+      ungroup()
 
+#Merge the Data withg the prior knowledge to inspect potential issues:
+merged_df <- merge(ChemicalClass, 
+                   DetectedIDs, 
+                   by.x= "class_source_id",  
+                   by.y= "HMDB", 
+                   all.y=TRUE)
+
+# If you inspect the table you will see that especially amino-acids will map to multiple entries, yet they have the same value. So for enrichment analysis this will need to be considered, either by removing one of the IDs or dependent on the context take this into account for the interpretation of the results when using this for enrichment analysis.
 ```
 
 ```{r figure_4}
