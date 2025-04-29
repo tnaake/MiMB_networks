@@ -1405,17 +1405,16 @@ Fig4D <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 #| results: false
 
 
-row1 <- plot_grid(Fig4A, ncol = 1, labels = c("A"))
-row2 <- plot_grid(Fig4B, Fig4C, Fig4D, ncol = 3, labels = c("B", "C", "D"))
-#row3 <- plot_grid(Fig3E, Fig3F, Fig3G, ncol = 3, labels = c("E", "F", "G"))
-g <- plot_grid(row1, row2, ncol = 1, rel_heights = c(2, 1))
+row1 <- plot_grid(Fig4A, Fig4B, ncol = 2, labels = c("A", "B"), rel_widths = c(1.6, 1.2))
+row2 <- plot_grid(Fig4C, Fig4D, ncol = 2, labels = c( "C", "D"), rel_widths = c(1.6, 1.2) )
+g <- plot_grid(row1, row2, ncol = 1, rel_heights = c(1.5, 1))
 
 ggsave(filename = "figure/figure4.jpg", 
        plot = g, 
        device = "jpg", 
        dpi = 600, 
-       width = 16, 
-       height = 14) 
+       width = 12.2, 
+       height = 13) 
 ```
 
 ## Experimental network analysis using statistical methods
