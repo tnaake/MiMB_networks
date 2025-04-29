@@ -122,7 +122,7 @@ if (!require("xlsx", quietly = TRUE))
 
 Networks provide a powerful framework to study metabolomics and proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, biosynthetic enzymes) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase the statistical programming language R's extensive ecosystem for metabolomics, proteomics and network analysis analysis, including packages like *igraph* [@Csardi2006], *MOFA* [@Argelaguet2018], and *decoupleR* [@BadiaIMompel2022]. Multi-omics factor analysis (MOFA), a statistical technique to identify latent factors of shared variation in multi-omics datasets, is used to integrate multiple data modalities that share the same sample set. We will use the results from the MOFA model to guide downstream analysis in pathway and network analysis. *decoupleR* uses biological signatures to calculate scores based on prior knowledge, offering the interpretation of the datasets by known biological networks and pathways.
 
-In this chapter, we will distinguish between knowledge and experimental networks [@Amara2022]. Knowledge networks are constructed using existing biochemical and biological information, helping to interpret metabolomics and proteomics data within the framework of known pathways. For example, a metabolic reaction network represents a knowledge network, where metabolites act as vertices and their biochemical conversions are the edges. In contrast, experimental networks are directly derived from metabolomics and proteomics data, linking metabolites and proteins based on observed relationships like correlation or, in case of MS/MS metabolomics data, spectral similarity. Both types of networks can be explored using advanced statistical methods, graph analysis, and data-driven techniques to reveal meaningful patterns and connections within the dataset.
+In this chapter, we distinguish between knowledge and experimental networks [@Amara2022]. Knowledge networks are constructed using existing biochemical and biological information, helping to interpret metabolomics and proteomics data within the framework of known pathways. For example, a metabolic reaction network represents a knowledge network, where metabolites act as vertices and their biochemical conversions are the edges. In contrast, experimental networks are directly derived from metabolomics and proteomics data, linking metabolites and proteins based on observed relationships like correlation or, in case of MS/MS metabolomics data, spectral similarity. Both types of networks can be explored using advanced statistical methods, graph analysis, and data-driven techniques to reveal meaningful patterns and connections within the dataset.
 
 # Materials
 
@@ -889,13 +889,12 @@ To systematically define which statistical tests to consider one can follow thes
 #| message: true
 #| warning: false
 #| results: false
-
 InputData <- assay(metabolomics) |>
     t() |> 
     as.data.frame() |>
-  dplyr::mutate(across(everything(), ~ tidyr::replace_na(.x, 0)))
+    dplyr::mutate(across(everything(), ~ tidyr::replace_na(.x, 0)))
 
-# Differential metabolite analysis
+## differential metabolite analysis
 DMA_Res <- MetaProViz::DMA(
     InputData = InputData,
     SettingsFile_Sample = as.data.frame(colData(metabolomics)),
@@ -903,6 +902,7 @@ DMA_Res <- MetaProViz::DMA(
     SettingsFile_Metab = as.data.frame(rowData(metabolomics)),
     StatPval = "t.test",
     StatPadj = "fdr",
+    #Transform = FALSE,
     PerformShapiro = TRUE,
     PerformBartlett = TRUE,
     SaveAs_Plot = NULL,
@@ -917,20 +917,19 @@ DMA_Res <- MetaProViz::DMA(
 #| message: false
 #| warning: false
 #| results: false
-
 DMA_Res[["ShapiroTest"]][["DF"]] |>
-  as.data.frame() |>
-  dplyr::select(1:5) |>
-  kableExtra::kbl(caption = "`Shaprio.test` results.") |>
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria", font_size = 12) 
+    as.data.frame() |>
+    dplyr::select(1:5) |>
+    kableExtra::kbl(caption = "`Shaprio.test` results.") |>
+    kableExtra::kable_classic(full_width = F, html_font = "Cambria", font_size = 12) 
 
 
 Fig3A <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["NAT"]] + 
-  #ggplot2::ggtitle("Normal distribution of NAT samples") +
-  ggplot2::labs(subtitle = "39.27% of metabolites are not normally distributed based on Shapiro test.")
+    #ggplot2::ggtitle("Normal distribution of NAT samples") +
+    ggplot2::labs(subtitle = "39.27% of metabolites are not normally distributed based on Shapiro test.")
 
-Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]]+
-  ggplot2::labs(subtitle = "46.57% of metabolites are not normally distributed based on Shapiro test.")
+Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]] +
+    ggplot2::labs(subtitle = "46.57% of metabolites are not normally distributed based on Shapiro test.")
 
 
 ```
@@ -953,6 +952,7 @@ DMA_Res_wilcox <- MetaProViz::DMA(
     SettingsFile_Metab = as.data.frame(rowData(metabolomics)),
     StatPval = "wilcox.test",
     StatPadj = "fdr",
+    #Transform = FALSE,
     PerformShapiro = TRUE,
     PerformBartlett = TRUE,
     SaveAs_Plot = NULL,
@@ -1678,6 +1678,11 @@ D: Thresholded network based on Pearson and Spearman correlation. Nodes represen
 
 
 ```{r table_metabolites_chebi_hmdb}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: true
 ## create the table
 df <- tribble(
   ~`Trivial Name`, ~Class, ~ChEBI, ~HMDB,
@@ -1700,6 +1705,9 @@ kbl(df, format = "pandoc",
 ```{r table_community_detection}
 #| eval: true
 #| echo: false
+#| message: false
+#| warning: false
+#| results: true
 
 ## create the table
 df <- tribble(
