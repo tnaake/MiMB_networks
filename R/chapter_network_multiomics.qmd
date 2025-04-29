@@ -595,7 +595,7 @@ MOFAobject <- prepare_mofa(
 ## initialize MOFA model
 #reticulate::py_install("mofapy2")
 MOFAobject <- run_mofa(MOFAobject, 
-                       use_basilisk = FALSE)
+                       use_basilisk = TRUE)
 ```
 
 4.  Inspect the sanity of the model output. Plot data overview and verify that the dimensions for each dataset are as expected. Calculate the correlation scores between the factors (Figure 2 A). The correlation coefficients between the factors should be low, indicating that each factor captures distinct variation in the data. If factors are found to be highly correlated, it may suggest that the model is not effectively separating the variation across the datasets. In such cases, consider reducing the number of trained factors. This will not only help in improving the interpretability of the model but also enhance the biological relevance of the factors by focusing on more distinct sources of variation.
@@ -1420,6 +1420,49 @@ merged_df <- merge(ChemicalClass,
                    all.y=TRUE)
 
 # If you inspect the table you will see that especially amino-acids will map to multiple entries, yet they have the same value. So for enrichment analysis this will need to be considered, either by removing one of the IDs or dependent on the context take this into account for the interpretation of the results when using this for enrichment analysis.
+```
+
+```{r}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
+
+#If you seek to use for example the MOFA results instead of the differential analysis, you can do this by:
+#Extracting Factor of interest (here Factor 1 as it separates Tumour and Normal well)
+
+FactorsMetab <- get_weights(MOFAobject, views = "metabolomics")$metabolomics|>
+  as.data.frame()|>
+  tibble::rownames_to_column("metabolite")
+
+FactorsProt <- get_weights(MOFAobject, views = "proteomics")$proteomics|>
+  as.data.frame()
+
+#Merging with the feature metainformation needed to integrate with prior knowledge:
+FactorsProt <- merge(x= FactorsProt,
+                     y= as.data.frame(rowData(proteomics)),
+                     by=0,
+                     all.x=TRUE) |>
+   dplyr::mutate(gene = stringr::str_extract(as.character(fasta_header), "(?<=GN=)[^ ]+"))|>
+   dplyr::filter(!is.na(gene)) |>
+   dplyr::group_by(gene) |>
+   dplyr::slice_max(order_by = abs(Factor1), n = 1, with_ties = FALSE) |>
+   dplyr::ungroup()
+
+#Now we can for example use decoupleR and the Gaude pathways to perform enrichment analysis of Factor1 proteins for metabolic enzymes:
+Gaude_Pathways$weight <- 1 #needed to run ulm/mlm
+
+Input <- FactorsProt [,c(19,2)]|>
+  tibble::column_to_rownames("gene")
+
+decoupler_res <- decoupleR::run_ulm(mat=as.matrix(Input), 
+                                          net=Gaude_Pathways, 
+                                          .source='term', 
+                                          .target='gene',
+                                          .mor='weight', 
+                                          minsize = 5) # Minimum of target features per biological entity. 
+
 ```
 
 ```{r figure_4}
