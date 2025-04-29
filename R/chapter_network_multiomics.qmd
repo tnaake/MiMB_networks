@@ -1639,8 +1639,6 @@ In order to interpret a metabolomics experiment in its entirety, it is important
 
 <!-- COMMENT: adjust the Conclusion -->
 
-# References
-
 
 # Figure Captions/Table Captions/Tables
 
@@ -1734,3 +1732,5 @@ kbl(df, format = "pandoc",
       column_spec(column = 1, width = "6 cm") |> ## algorithm column wider
       column_spec(column = 2:5, width = "2 cm")  ## other columns narrower
 ```
+
+# References
