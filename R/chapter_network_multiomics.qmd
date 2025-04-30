@@ -15,7 +15,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-<!-- revise abstract -->
+<!-- COMMENT: revise abstract -->
 
 Metabolomics, the study of small molecules in biological systems, and proteomics, the study of proteins in biological systems, have become powerful tools for understanding biochemical pathways, discovering biomarkers, and elucidating disease mechanisms. This chapter provides a guide to performing metabolomics and proteomics data analysis in *R*,  focusing on pathway and network-based approaches. It covers essential steps in data processing, quality control (QC), differential expression analysis, multi-omics factor analysis (MOFA), statistical network analysis, and pathway analysis using prior knowledge. The methods outlined provide a framework for biomarker discovery and advancing systems-level understanding of disease processes using metabolomics and proteomics datasets.
 
@@ -502,13 +502,16 @@ gg_dist_log <- distSample(d, proteomics, label = "tissue",
 #| warning: false
 #| results: false
 g <- plot_grid(gg_meanSd, gg_meanSd_log, gg_dist, gg_dist_log, 
-    gg_pca, gg_pca_log, ncol = 2, labels = "AUTO")
-ggsave(filename = "figure/figure1.jpg", plot = g, device = "jpg", dpi = 600)
+    gg_pca, gg_pca_log, ncol = 2, labels = "AUTO", 
+    rel_widths = c(0.5, 0.5), rel_heights = c(0.32, 0.38, 0.3), 
+    label_size = 12)
+ggsave(filename = "figure/figure1.jpg", plot = g, device = "jpg", dpi = 600, 
+    width = 6.3, height = 9.5)
 ```
 
 ### Normalization, batch correction, transformation, missing value imputation
 
-Tools, such as MatrixQCvis [@Naake2022] can be used to explore data quality interactively and to optimize the choice of batch correction, normalization, or transformation methods. The *MatrixQCvis* package offers utility functions to perform normalization, batch reduction, transformation and imputation using a variety of methods (*normalizeAssay*, *batchCorrectionAssay*, *transformAssay*, *imputeAssay*).
+Tools, such as *MatrixQCvis* [@Naake2022] can be used to explore data quality interactively and to optimize the choice of batch correction, normalization, or transformation methods. The *MatrixQCvis* package offers utility functions to perform normalization, batch reduction, transformation and imputation using a variety of methods (*normalizeAssay*, *batchCorrectionAssay*, *transformAssay*, *imputeAssay*).
 
 1.  (optional) Normalize the dataset. Normalization adjusts for technical variability and ensures comparability of metabolite and protein levels across samples. The choice of method depends on the dataset’s variability and experimental design. Common methods are median normalization, quantile division normalization (division of measurements of each sample by the given quantile, e.g. 50% for median division), sum normalization (division of measurements of each sample by the sum of intensities column for that sample).
 2.  (optional) Correct for batches. Batch effect correction is typically essential in multi-batch experiments acquired over a longer time, but may be not needed in smaller scale experiments. *ComBat*, for instance, requires specifying batch labels and optionally including covariates to retain biological variability. In case of linear effects of batches the batch effect can be removed via *limma*'s *removeBatchEffect* function and specifying the batch labels.
@@ -602,7 +605,7 @@ MOFAobject <- prepare_mofa(
 ## initialize MOFA model
 #reticulate::py_install("mofapy2")
 MOFAobject <- run_mofa(MOFAobject, 
-    use_basilisk = TRUE)
+    use_basilisk = FALSE)
 ```
 
 4.  Inspect the sanity of the model output. Plot data overview and verify that the dimensions for each dataset are as expected. Calculate the correlation scores between the factors. The correlation coefficients between the factors should be low, indicating that each factor captures distinct variation in the data. If factors are found to be highly correlated, it may suggest that the model is not effectively separating the variation across the datasets. In such cases, consider reducing the number of trained factors. This will not only help in improving the interpretability of the model but also enhance the biological relevance of the factors by focusing on more distinct sources of variation.
@@ -862,7 +865,8 @@ gg_heatmap <- ggdraw() + draw_image(gg_heatmap)
 
 g <- plot_grid(gg_variance, gg_cor_metadata, 
     gg_factor1_factor2_simplified, gg_heatmap,
-    ncol = 2, rel_widths = c(1, 1), labels = "AUTO")
+    ncol = 2, rel_widths = c(1, 1), labels = "AUTO",
+    label_size = 8)
 ggsave(filename = "figure/figure2.jpg", plot = g, device = "jpg", dpi = 600)
 ```
 
@@ -883,7 +887,7 @@ To systematically define which statistical tests to consider one can follow thes
 
 4. Perform differential expression analysis. If there are missing values (*NA*s) in the data linear modeling can be used, such as limma, which fits a linear model to the data and can handle missing values [@Ritchie_2015]. Yet, the limma method assumes that the residuals of the linear model are approximately normally distributed [@Ritchie_2015]. Other options are to either perform missing value imputation, which comes with its own pitfalls in metabolomics, or to assume that the missing values are true zeros, which in turn can lead to zero inflation [@Huang_2022]. MetaProViz can be used to perform differential analysis. It gives the choice between different statistical tests. Importantly, MetaProViz also adjusts for multiple testing using the Benjamini Hochberg, False Discovery Rate (FDR), Bonferroni or Holm method [@Schmidt2025].
 
-```{r}
+```{r dma}
 #| eval: true
 #| echo: false
 #| message: true
@@ -909,7 +913,7 @@ DMA_Res <- MetaProViz::DMA(
     SaveAs_Table = NULL)
 ```
 
-```{r}
+```{r dma_visualization}
 #| eval: true
 #| echo: false
 #| message: false
@@ -934,7 +938,7 @@ Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]] +
 
 ```
 
-```{r}
+```{r dma_wilcox}
 #| eval: true
 #| echo: false
 #| message: true
@@ -963,12 +967,13 @@ DMA_Res_wilcox <- MetaProViz::DMA(
 
 1. Check the results of the differential analysis by a volcano plot. Check the proportion of the metabolites that are significantly up- or down-regulated e.g. between the two conditions for both, the t-test and Wilcoxon rank-sum test (Figure 3 C-D). The classical volcano plot of the differential analysis results(Figure 3 B) displays the log2 fold change on the x-axis, while the y-axis represents the negative logarithm of the adjusted p-value. The volcano plot is a scatter plot that displays the relationship between the magnitude of change (log2 fold change) and the significance (adjusted p-value) of each metabolite. Points above a certain threshold are considered statistically significant and hence it is important to set thresholds for significance (e.g. adjusted p-value < 0.05) and log2 fold change(e.g. |log2FC| > 0.5).
 
-```{r}
+```{r dma_wilcox_visualization}
 #| eval: true
 #| echo: false
 #| message: false
 #| warning: false
 #| results: false
+#| fig.show: hide
 
 # data table inspection
 DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
@@ -1009,7 +1014,7 @@ Fig3D <- Res[["Plot_Sized"]][["Plot_Sized"]]
 ```
 
 2. (optional) Add additional information to the volcano plot. For example, with the *MetaProViz* package, add additional relevant information to the plot [@Schmidt2025], e.g. the metabolite name and colour code for metabolite classes as provided by Biocrates (Figure 3 E). 
-```{r}
+```{r volcano}
 #| eval: true
 #| echo: false
 #| message: false
@@ -1036,12 +1041,13 @@ Fig3E <- Res[["Plot_Sized"]][["Plot_Sized"]]
 ```
 
 3. (optional) Examine individual plots for each metabolite class for better interpretability (Figure 3 F-H).
-```{r}
+```{r volcano_wilcox}
 #| eval: true
 #| echo: false
 #| message: false
 #| warning: false
 #| results: false
+#| fig.show: hide
 
 InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
     tibble::column_to_rownames("Metabolite") |>
@@ -1072,13 +1078,17 @@ Fig3H <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 #| warning: false
 #| results: false
 
-row1 <- plot_grid(Fig3A, Fig3B, ncol = 2, labels = c("A", "B"))
+row1 <- plot_grid(Fig3A, Fig3B, ncol = 2, labels = c("A", "B"), 
+    label_size = 20)
 row2 <- plot_grid(Fig3C, Fig3D, Fig3E, ncol = 3, 
-    labels = c("C", "D", "E"),  rel_widths = c(0.85, 0.85, 1.3) )
+    labels = c("C", "D", "E"), rel_widths = c(0.85, 0.85, 1.3), 
+    label_size = 20)
 row3 <- plot_grid(Fig3F, Fig3G, Fig3H, NULL, ncol = 4, 
-    labels = c("F", "G", "H"),  rel_widths = c(0.85, 0.85, 0.85, 0.45) )
+    labels = c("F", "G", "H"), rel_widths = c(0.85, 0.85, 0.85, 0.45), 
+    label_size = 20)
 g <- plot_grid(row1, row2, row3, ncol = 1, rel_heights = c(0.7, 1, 1))
 
+## COMMENT: still not the "old" abundance ranges, volcano plot seems off
 ggsave(filename = "figure/figure3.jpg", 
     plot = g, 
     device = "jpg", 
@@ -1180,7 +1190,7 @@ PK, which can be divided in several steps:
    IDs, and/or quantify ambiguities, for example by the *MetaProViz* package
    [@Schmidt2025]. 
    
-```{r}
+```{r pk_biocrates}
 #| eval: true
 #| echo: false
 #| message: false
@@ -1209,7 +1219,7 @@ SettingsFile_Metab <-  merge(
    of choice we recommend assignment of multiple metabolite IDs dependent on 
    the level of ambiguity to the detected metabolites.
    
-```{r}
+```{r pk_upset}
 #| eval: true
 #| echo: false
 #| message: false
@@ -1300,7 +1310,7 @@ Fig4A <- MetaProViz:::GenerateUpset(
    enrichment analysis. *MetaProViz* provides pathway-metabolite sets 
    without unspecific metabolites [@Schmidt2025].
 
-```{r}
+```{r pk_load_additonal_datasets}
 #| eval: true
 #| echo: false
 #| message: false
@@ -1332,24 +1342,23 @@ The biological interpretation of the results is crucial and should be done in th
 
 4. Check how many metabolites of e.g. a pathway in the PK have been detected. For example, if a pathway only contains 20 metabolites and 13 of them are detected (65%), this is a stronger evidence than detecting 40 metabolites of a pathway containing 110 metabolites (36%). 
 
-```{r}
+```{r pk_volcano_tu_vs_nat}
 #| eval: true
 #| echo: false
 #| message: false
 #| warning: false
 #| results: false
-#| fig.show: "hide"
-  
-InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
+#| fig.show: hide
+DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |> ## COMMENT: why not assigned to InputData?
     tibble::column_to_rownames("Metabolite") |>
     dplyr::filter(class %in% c("Ceramides", "Triacylglycerols", "Glycosylceramides"))
                     
 SettingsFile_Metab <- merge(
-      x = as.data.frame(rowData(metabolomics))[, 1:2],
-      y = FeatureMetadata_Biocrates[, c(2:3, 5, 7, 11)],
-      by.x = "feature_original",
-      by.y = "TrivialName_Prior2023",
-      all.x = TRUE) |>
+        x = as.data.frame(rowData(metabolomics))[, 1:2],
+        y = FeatureMetadata_Biocrates[, c(2:3, 5, 7, 11)],
+        by.x = "feature_original",
+        by.y = "TrivialName_Prior2023",
+        all.x = TRUE) |>
     mutate(
         combined_id = case_when(
             !is.na(CHEBI) & !is.na(HMDB) & !is.na(LIMID) ~ "CHEBI-HMDB-LIMID",
@@ -1387,43 +1396,42 @@ Fig4D <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 6. Take into account the statistical method used for enrichment analysis as it impacts the interpretation of the results (see discussion above).
 
 
-```{r}
+```{r pk_diff_exp}
 #| eval: true
 #| echo: false
 #| message: false
 #| warning: false
 #| results: false
-
 ## combine the differential results with the metabolite IDs:
 InputData <- merge(
     x = DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]],
     y = SettingsFile_Metab,
-    by.x = "Metabolite",
-    by.y = "feature",
+    by.x = "feature_original", 
+    by.y = "feature_original",## COMMENT: I needed to adapt this, since the column was not present???
     all.x = TRUE)
 
 ## expand the metabolite IDs:
-DetectedIDs <- InputData|>
+DetectedIDs <- InputData |>
   dplyr::select("Metabolite", "HMDB")|>
   tidyr::drop_na()|>
       mutate(row_id = dplyr::row_number())|>
       mutate("OriginalEntry_InputData":= !!sym("HMDB")) |> # Store original values
-      tidyr::separate_rows("HMDB", sep = ",\\s*")|>
+      tidyr::separate_rows("HMDB", sep = ",\\s*") |>
       group_by(row_id) |>
       mutate("OriginalEntry_InputData" := paste0("InputData_", dplyr::cur_group_id())) |>
       ungroup()
 
-## merge the Data withg the prior knowledge to inspect potential issues:
+## merge the Data with the prior knowledge to inspect potential issues:
 merged_df <- merge(ChemicalClass, 
-                   DetectedIDs, 
-                   by.x= "class_source_id",  
-                   by.y= "HMDB", 
-                   all.y=TRUE)
+    DetectedIDs, 
+    by.x = "class_source_id",
+    by.y = "HMDB",
+    all.y = TRUE)
 
 ## if you inspect the table you will see that especially amino-acids will map to multiple entries, yet they have the same value. So for enrichment analysis this will need to be considered, either by removing one of the IDs or dependent on the context take this into account for the interpretation of the results when using this for enrichment analysis.
 ```
 
-```{r}
+```{r pk_mofa}
 #| eval: true
 #| echo: false
 #| message: false
@@ -1478,11 +1486,12 @@ decoupler_res <- decoupleR::run_ulm(
 #| warning: false
 #| results: false
 row1 <- plot_grid(Fig4A, Fig4B, ncol = 2, labels = c("A", "B"), 
-    rel_widths = c(1.6, 1.2))
+    rel_widths = c(1.6, 1.2), label_size = 20)
 row2 <- plot_grid(Fig4C, Fig4D, ncol = 2, labels = c( "C", "D"), 
-    rel_widths = c(1.6, 1.2) )
+    rel_widths = c(1.6, 1.2), label_size = 20)
 g <- plot_grid(row1, row2, ncol = 1, rel_heights = c(1.5, 1))
 
+## COMMENT: panel C missing?
 ggsave(filename = "figure/figure4.jpg", 
     plot = g, 
     device = "jpg", 
@@ -1649,37 +1658,12 @@ is less effective for networks with overlapping communities.
 - *Community structure detection algorithm based on interacting fluids* (*cluster_fluid_communities*) uses label propagation with a fixed number of communities, allowing them to expand dynamically based on node density. The algorithm is fast. The algorithm requires to predefine the number of communities and may yield inconsistent results across runs.
 - *Community structure detection based on Infomap* (*cluster_infomap*) works by simulating random walks on the network and compressing the path description to reveal the best modular structure. The idea is that if a network has well-defined communities, a random walker will spend more time inside a community before jumping to another one. The algorithm captures this by trying to minimize the description length of the walk, effectively grouping vertices that are frequently visited together. The algorithm may be computationally demanding and is sensitive to parameter choices.
 - *Community structure detection detection based on propagating labels* (*cluster_label_prop*) assigns labels to vertices, which spread iteratively based on majority voting until convergence. The algorithm scales linearly with the number of vertices and is, thus, works well on large networks. Due to the random nature of initiation, the results can be unstable and inconsistent for certain networks.
-- *Community structure detection detection based on leading eigen* (*cluster_leading_eigen*) uses spectral clustering by computing the leading eigenvectors of a modularity matrix to find communities. The algorithm may be computationally expensive for large networks.
+- *Community structure detection detection based on leading eigenvector* (*cluster_leading_eigen*) uses spectral clustering by computing the leading eigenvectors of a modularity matrix to find communities. The algorithm may be computationally expensive for large networks.
 - *Community structure detection using the Leiden algorithm* (*cluster_leiden*) is a faster version of the Louvain algorithm and yields more accurate solutions. It iteratively refines partitions to ensure well-connected communities by optimizing either the modularity or the Constant Potts model, which does not suffer from the resolution limit. The algorithm may have difficulties finding small communities.
 - *Community structure detection by multi-level optimization of modularity* (*cluster_louvain*) optimizes modularity by merging hierarchically small communities into larger ones in a greedy manner. The algorithm scales well to large networks. It may produce different results on each run and may has difficulties finding small communities.
 - *community structure detection using the maximum modularity* (*cluster_optimal*) calculates the optimal community structure by maximizing the modularity over all possible partitions. The algorithm guarantees the best modularity score, but is computationally expensive for large network.
 - *Community structure detection based on statistical mechanics* (*cluster_spinglass*) models community detection as an energy minimization problem via a spin-glass model and simulated annealing. The algorithm is computationally expensive for large networks and may be sensitive to parameter settings.
 - *Community structure detection based on short random walks* (*cluster_walktrap*) simulates random walks on the network to detect community structure, assuming vertices within the same community are more likely to be visited in one walk. The algorithm may be slow for large networks.
-
-
-<!-- ::: {.table} -->
-
-Table 2: **Compatibility of community detection algorithms with network properties** 
-
-| algorithm                   | undirected   | directed     | unweighted   | weighted     |
-|-----------------------------|--------------|--------------|--------------|--------------|
-| *cluster_edge_betweenness*  |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
-| *cluster_fast_greedy*       |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
-| *cluster_fluid_communities* |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|  $$\times$$  |
-| *cluster_infomap*           |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
-| *cluster_label_prop*        |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
-| *cluster_leading_eigen*     |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
-| *cluster_leiden*            |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
-| *cluster_louvain*           |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
-| *cluster_optimal*           |$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|$$\checkmark$$|
-| *cluster_spinglass*         |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|
-| *cluster_walktrap*          |$$\checkmark$$|  $$\times$$  |$$\checkmark$$|$$\checkmark$$|  
-
-: width="100%"
-
-: tbl-colwidths="28,17,17,21,17"
-
-<!-- ::: -->
 
 
 ```{r network_cluster}
@@ -1723,8 +1707,9 @@ gg_network_factor1 <- ggdraw() + draw_image(gg_network_factor1)
 gg_network_infomap <- ggdraw() + draw_image(gg_network_infomap)
 
 g <- plot_grid(gg_hist_coef, gg_hist_pvalues, 
-                gg_network_factor1, gg_network_infomap, 
-     ncol = 2, rel_widths = c(1, 1), labels = "AUTO")
+        gg_network_factor1, gg_network_infomap, 
+    ncol = 2, rel_widths = c(1, 1), labels = "AUTO",
+    label_size = 12)
 ggsave(filename = "figure/figure5.jpg", plot = g, device = "jpg", dpi = 600)
 ```
 
@@ -1738,14 +1723,14 @@ In order to interpret a metabolomics experiment in its entirety, it is important
 
 # Figure Captions/Table Captions/Tables
 
-
 Figure 1: Assessment of log-transformation of proteomics dataset on quality metrics.
 A: Mean-sd plot of raw data. B: Mean-sd plot of transformed data. 
 Log-transformation controls heteroskedasticity.
 C: Matrix of Euclidean distances between samples of raw data. 
 D: Matrix of Euclidean distances between samples of transformed data.
 E: PCA of raw data. F: PCA of transformed data. Log-transformation increases
-variation on prinpical component 1 and 2.
+variation on prinpical component 1 and 2. The percentages indicate the 
+explained variance per principal component. PC: principal component. sd: standard deviation.
 
 Figure 2: Multi-omics factor analysis diagnostic and loading plots.
 A: Variance explained by Factors 1-5 in the metabolomics and proteomics layers.
