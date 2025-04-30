@@ -9,6 +9,7 @@ author:
       - name: European Molecular Biology Laboratory, Meyerhofstrasse 1, 69117 Heidelberg, Germany
       - name: European Molecular Biology Laboratory, Notkestrasse 85, 22607 Hamburg, Germany
 bibliography: bibliography.bib
+prefer-html: true
 format: docx
 editor_options: 
   chunk_output_type: console
@@ -61,6 +62,11 @@ if (!require("igraph", quietly = TRUE))
     BiocManager::install("igraph")
 library("igraph")
 
+## kableExtra
+ if (!require("kableExtra", quietly = TRUE))
+     BiocManager::install("kableExtra")
+ library("kableExtra")
+
 ## magick
 if (!require("magick", quietly = TRUE))
     BiocManager::install("magick")
@@ -112,10 +118,11 @@ if (!require("xlsx", quietly = TRUE))
 ```
 
 # Introduction
-<!-- # Introduction to metabolomics data analysis trough integrating with prior knowledge, proteomics data and performing network analysis -->
+<!-- # Introduction to metabolomics data analysis through integrating with prior knowledge, proteomics data and performing network analysis -->
 
-With the rising number of metabolomics studies, good quality, standardised analysis stragtegies become essential to ensure reprodcuibility and biological interpretability. For this prior knowledge metabolite sets, gene-metabolite sets or metabolic networks become essential to facilitate metabolomics interpretation. 
-Networks provide a powerful framework to study metabolomics and enable the integration with proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, biosynthetic enzymes) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. In this chapter, we will showcase the statistical programming language R's extensive ecosystem for metabolomics analysis and integration with proteomics, prior knowledge using network analysis among other strategies, including packages like *igraph* [@Csardi2006], *MOFA* [@Argelaguet2018], *decoupleR* [@BadiaIMompel2022] and *MetaProViz* [@Schmidt2025]. As an example of multiple data modalitie integration, we integrate metabolomics with proteomics that share the same sample set using Multi-omics factor analysis (MOFA), a statistical technique to identify latent factors of shared variation in multi-omics datasets. We use the results from the MOFA model to guide downstream analysis in pathway and network analysis. *MetaProViz* provides access and quality control plots for the integration of metabolomics with prior knowledge, whilst *decoupleR* uses those biological signatures to calculate scores based on prior knowledge, offering the interpretation of the datasets by known biological networks and pathways.
+With the increasing number of metabolomics studies, standardised and reproducible analysis strategies are essential to ensure accurate biological interpretation. To support this, high-quality prior knowledge (PK) resources, such as curated metabolite sets and gene-metabolite associations, combined with the application of metabolic networks are effective to facilitate data interpretation. Networks provide a powerful framework to study metabolomics and enable the integration with proteomics data by representing metabolites and protein as vertices and their relationships (e.g., correlations, biosynthetic enzymes) as edges. This approach enables insights into system-level changes and interactions between metabolites, proteomics and other omics layers. 
+
+In this chapter, we will showcase the statistical programming language R's extensive ecosystem for metabolomics analysis and integration with proteomics, PK using network analysis among other strategies, including packages like *igraph* [@Csardi2006], *MOFA* [@Argelaguet2018], *decoupleR* [@BadiaIMompel2022] and *MetaProViz* [@Schmidt2025]. As an example of multiple data modalitie integration, we integrate metabolomics with proteomics that share the same sample set using Multi-omics factor analysis (MOFA), a statistical technique to identify latent factors of shared variation in multi-omics datasets. We use the results from the MOFA model to guide downstream analysis in pathway and network analysis. *MetaProViz* provides access and quality control plots for the integration of metabolomics with prior knowledge, whilst *decoupleR* uses those biological signatures to calculate scores based on prior knowledge, offering the interpretation of the datasets by known biological networks and pathways.
 
 In this chapter, we distinguish between knowledge and experimental networks [@Amara2022]. Knowledge networks are constructed using existing biochemical and biological information, helping to interpret metabolomics and proteomics data within the framework of known pathways. For example, a metabolic reaction network represents a knowledge network, where metabolites act as vertices and their biochemical conversions are the edges. In contrast, experimental networks are directly derived from metabolomics and proteomics data, linking metabolites and proteins based on observed relationships like correlation or, in case of MS/MS metabolomics data, spectral similarity. Both types of networks can be explored using advanced statistical methods, graph analysis, and data-driven techniques to reveal meaningful patterns and connections within the dataset.
 
@@ -595,10 +602,10 @@ MOFAobject <- prepare_mofa(
 ## initialize MOFA model
 #reticulate::py_install("mofapy2")
 MOFAobject <- run_mofa(MOFAobject, 
-                       use_basilisk = TRUE)
+    use_basilisk = TRUE)
 ```
 
-4.  Inspect the sanity of the model output. Plot data overview and verify that the dimensions for each dataset are as expected. Calculate the correlation scores between the factors (Figure 2 A). The correlation coefficients between the factors should be low, indicating that each factor captures distinct variation in the data. If factors are found to be highly correlated, it may suggest that the model is not effectively separating the variation across the datasets. In such cases, consider reducing the number of trained factors. This will not only help in improving the interpretability of the model but also enhance the biological relevance of the factors by focusing on more distinct sources of variation.
+4.  Inspect the sanity of the model output. Plot data overview and verify that the dimensions for each dataset are as expected. Calculate the correlation scores between the factors. The correlation coefficients between the factors should be low, indicating that each factor captures distinct variation in the data. If factors are found to be highly correlated, it may suggest that the model is not effectively separating the variation across the datasets. In such cases, consider reducing the number of trained factors. This will not only help in improving the interpretability of the model but also enhance the biological relevance of the factors by focusing on more distinct sources of variation.
 
 ```{r mofa_data_overview}
 #| eval: true
@@ -630,7 +637,7 @@ dev.off()
 #  theme_void()
 ```
 
-5.  Examine explained variance of the factors and per modality (Figure 2 B). The analysis shows the proportion of variance explained by each latent factor across different views (modalities) and groups (if applicable). Higher variance explained per factor means that the factor captures a significant portion of the variation in that particular view. If the first few factors explain most of the variance, it suggests that only a subset of factors drive the structure in the data. If certain factors explain more variance in one view compared to another, it suggests that the factor is more specific to that modality. Co-variance in most factors indicates a strong relationship between the data types. If plotted separately, differences in variance explained between groups may indicate distinct biological patterns or variation in data structure across conditions.
+5.  Examine explained variance of the factors and per modality (Figure 2 A). The analysis shows the proportion of variance explained by each latent factor across different views (modalities) and groups (if applicable). Higher variance explained per factor means that the factor captures a significant portion of the variation in that particular view. If the first few factors explain most of the variance, it suggests that only a subset of factors drive the structure in the data. If certain factors explain more variance in one view compared to another, it suggests that the factor is more specific to that modality. Co-variance in most factors indicates a strong relationship between the data types. If plotted separately, differences in variance explained between groups may indicate distinct biological patterns or variation in data structure across conditions.
 
 ```{r mofa_variance_explained}
 #| eval: true
@@ -692,7 +699,7 @@ MOFAobject@samples_metadata <- dplyr::left_join(
     covariates, by = c("sample" = "name"))
 ```
 
-2.  Analyse the association between latent factors and metadata (e.g., clinical metadata, information on demographics, experimental condition, Figure 2 C). Compute correlations between the learned MOFA factors and the user-specific covariates (continous or categorical). Visualize and examine the correlation coefficients and p-values. The intensity and sign of the color indicate the strength and direction of the correlation. Positive correlations suggest that an increase in the covariate is associated with an increase in the factor values. Negative correlations suggest an inverse relationship.
+2.  Analyse the association between latent factors and metadata (e.g., clinical metadata, information on demographics, experimental condition, Figure 2 B). Compute correlations between the learned MOFA factors and the user-specific covariates (continous or categorical). Visualize and examine the correlation coefficients and p-values. The intensity and sign of the color indicate the strength and direction of the correlation. Positive correlations suggest that an increase in the covariate is associated with an increase in the factor values. Negative correlations suggest an inverse relationship.
 
 ```{r mofa_correlate_factors}
 #| eval: true
@@ -724,7 +731,7 @@ correlate_factors_with_covariates(MOFAobject,
     plot = "log_pval", alpha = 0.05)
 ```
 
-3.  Plot the separation of the samples by factors (Figure 2 D). Each factor arranges the samples along a one-dimensional axis centered at zero, where the absolute value is not important; only the relative positioning of the samples matters. Samples with different signs on the axis indicate opposite "effects" along the inferred variation axis, with larger absolute values suggesting stronger effects. The interpretation of these factors is similar to that of principal components in PCA, where each factor represents a direction of variation in the data, and the separation of samples along these factors provides insight into the underlying patterns.
+3.  Plot a scatterplot of the samples by factors (Figure 2 C). Each factor arranges the samples along a one-dimensional axis centered at zero, where the absolute value is not important; only the relative positioning of the samples matters. Samples with different signs on the axis indicate opposite "effects" along the inferred variation axis, with larger absolute values suggesting stronger effects. The interpretation of these factors is similar to that of principal components in PCA, where each factor represents a direction of variation in the data, and the separation of samples along these factors provides insight into the underlying patterns.
 
 ```{r mofa_separation_samples_factors}
 #| eval: true
@@ -779,7 +786,7 @@ gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
     theme_bw()
 ```
 
-4.  Analyse the weights of the factors (Figure 2 E). The weights represent how strongly each feature is associated with each factor. Features with little or no association to a factor will have values near zero, while those with a strong association will exhibit large absolute values. The sign of the weight indicates the direction of the effect: a positive weight means the feature has higher lievels in samples with positive factor values, while a negative weight indicates higher levels in samples with negative factor values.
+4.  Analyse the weights of the factors. The weights represent how strongly each feature is associated with each factor. Features with little or no association to a factor will have values near zero, while those with a strong association will exhibit large absolute values. The sign of the weight indicates the direction of the effect: a positive weight means the feature has higher lievels in samples with positive factor values, while a negative weight indicates higher levels in samples with negative factor values.
 
 ```{r mofa_plot_top_weights}
 #| eval: true
@@ -791,16 +798,16 @@ gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
 
 png("figure/figure2_top_weights.png", width = 1500, height = 1500, res = 300)
 plot_top_weights(MOFAobject,
-  view = "metabolomics",
-  factor = 1,
-  nfeatures = 10, ## number of features to highlight
-  scale = TRUE,   ## scale weights from -1 to 1
-  abs = FALSE     ## take the absolute value?
+    view = "metabolomics",
+    factor = 1,
+    nfeatures = 10, ## number of features to highlight
+    scale = TRUE,   ## scale weights from -1 to 1
+    abs = FALSE     ## take the absolute value?
 )
 dev.off()
 ```
 
-5.  Analyse the feature intensities across samples and relationships between features using the information from the MOFA model (Figure 2 F). The visualizations are helpful for identifying patterns clusters, assessing data quality and batch effects, detecting potential outliers, and understanding how different features, factors, or sample groups contribute to the overall variation in the dataset. The visualizations should be created for each factor of interest and for the most important (e.g. top 10 or 20) features per factor (*choice of user*).
+5.  Analyse the feature intensities across samples and relationships between features using the information from the MOFA model (Figure 2 D). The visualizations are helpful for identifying patterns clusters, assessing data quality and batch effects, detecting potential outliers, and understanding how different features, factors, or sample groups contribute to the overall variation in the dataset. The visualizations should be created for each factor of interest and for the most important (e.g. top 10 or 20) features per factor (*choice of user*).
 
 ```{r mofa_plot_data_heatmap}
 #| eval: true
@@ -809,14 +816,21 @@ dev.off()
 #| warning: false
 #| results: false
 #| fig-show: hide
-png("figure/figure2_heatmap.png", width = 1500, height = 1500, res = 300)
-plot_data_heatmap(MOFAobject, view = "metabolomics", 
-    factor = 1, features = 10,
+p <- plot_data_heatmap(MOFAobject, view = "metabolomics", 
+    factor = 1, features = 7,
     ## extra arguments that are passed to the `pheatmap` function
     cluster_rows = TRUE, cluster_cols = FALSE, show_rownames = TRUE, 
-    show_colnames = FALSE, annotation_samples = "tissue")
-dev.off()
- 
+    show_colnames = FALSE, annotation_samples = "tissue", silent = TRUE)
+ggsave(p$gtable, file = "figure/figure2_heatmap.png")
+```
+
+```{r mofa_plot_data_scatter}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
+#| fig-show: hide
 plot_data_scatter(MOFAobject, view = "metabolomics", factor = 1, features = 6, 
     add_lm = TRUE, color_by = "tissue")
 ```
@@ -846,10 +860,9 @@ gg_factor1_factor2_simplified <- ggdraw() + draw_image(gg_factor1_factor2_simpli
 gg_top_weights <- ggdraw() + draw_image(gg_top_weights)
 gg_heatmap <- ggdraw() + draw_image(gg_heatmap)
 
-g <- plot_grid(gg_cor, gg_variance, 
-                gg_cor_metadata, gg_factor1_factor2_simplified, 
-                gg_top_weights, gg_heatmap,
-     ncol = 2, rel_widths = c(1, 1), labels = "AUTO")
+g <- plot_grid(gg_variance, gg_cor_metadata, 
+    gg_factor1_factor2_simplified, gg_heatmap,
+    ncol = 2, rel_widths = c(1, 1), labels = "AUTO")
 ggsave(filename = "figure/figure2.jpg", plot = g, device = "jpg", dpi = 600)
 ```
 
@@ -859,13 +872,14 @@ ggsave(filename = "figure/figure2.jpg", plot = g, device = "jpg", dpi = 600)
 Differential analysis identifies metabolites with significant abundance changes between conditions [@Huang_2022]. Here, selecting appropriate statistical tests depends on the data distribution and experimental design.
 
 ### Statistical Testing
+
 To systematically define which statistical tests to consider one can follow these steps:
 
 1. To define which comparison(s) should be performed, it is important to understand the meta information in the data and define the biological question. For ***one_vs_one (single comparison)*** analysis, where a single condition is compared against another (e.g. numerator = "Condition1" and denominator = "Condition2"), statistical tests such as the Student’s t-test [@Padhee_2024], Wilcoxon rank-sum test [@Wilcoxon_1945], or linear regression modeling [@Ritchie_2015] can be used. For ***all_vs_one (multiple comparison against a reference)***, where multiple conditions are compared individually against a single reference condition (e.g., numerator = ["Condition2", "Condition3", ..., "ConditionN"], denominator = "Condition1") or ***all_vs_all (multiple comparison)*** , where all conditions are compared against each other (e.g., numerator = ["Condition1", "Condition2", ..., "ConditionN"], denominator = ["Condition1", "Condition2", ..., "ConditionN"]), multiple testing has to be performed for which statistical tests such as ANOVA (analysis of variance), Welch’s ANOVA [@Welch_1951], Kruskal-Wallis test [@Padhee_2024], or linear modeling (e.g., using limma’s linear model fitting [@Ritchie_2015]) are appropriate.
 
 2. Check the assumption of normality to understand if the data follow a normal- or not-normal distribution by for example performing a Shapiro test [@Padhee_2024]. For normally distributed data, t-tests or ANOVA can be used, whilst for not-normally distributed data, non-parametric tests like Wilcoxon rank-sum test or Kruskal-Wallis test are appropriate [@Padhee_2024]. The R package [MetaProViz](https://saezlab.github.io/MetaProViz/index.html) can be used to perform the Shapiro test for normality. and the Bartlett's test for homoscedasticity
 
-3. Check if the data are homoscedastic, meaning weather they have equal variance, using Levene's test or Bartlett's test [@Viwatwongkasem_2004]. If the data are not homoscedastic, consider using test like Wilcoxon rank-sum test since tests like Kruskal-Wallis assumes equal variance [@Padhee_2024]. MetaProViz can be used to perform the Bartlett's test for homoscedasticity.
+3. Check if the data are homoscedastic, meaning whether they have equal variance, using Levene's test or Bartlett's test [@Viwatwongkasem_2004]. If the data are not homoscedastic, consider using test like Wilcoxon rank-sum test since tests like Kruskal-Wallis assumes equal variance [@Padhee_2024]. MetaProViz can be used to perform the Bartlett's test for homoscedasticity.
 
 4. Perform differential expression analysis. If there are missing values (*NA*s) in the data linear modeling can be used, such as limma, which fits a linear model to the data and can handle missing values [@Ritchie_2015]. Yet, the limma method assumes that the residuals of the linear model are approximately normally distributed [@Ritchie_2015]. Other options are to either perform missing value imputation, which comes with its own pitfalls in metabolomics, or to assume that the missing values are true zeros, which in turn can lead to zero inflation [@Huang_2022]. MetaProViz can be used to perform differential analysis. It gives the choice between different statistical tests. Importantly, MetaProViz also adjusts for multiple testing using the Benjamini Hochberg, False Discovery Rate (FDR), Bonferroni or Holm method [@Schmidt2025].
 
@@ -879,9 +893,9 @@ To systematically define which statistical tests to consider one can follow thes
 InputData <- assay(metabolomics) |>
     t() |> 
     as.data.frame() |>
-  dplyr::mutate(across(everything(), ~ tidyr::replace_na(.x, 0)))
+    dplyr::mutate(across(everything(), ~ tidyr::replace_na(.x, 0)))
 
-# Differential metabolite analysis
+## differential metabolite analysis
 DMA_Res <- MetaProViz::DMA(
     InputData = InputData,
     SettingsFile_Sample = as.data.frame(colData(metabolomics)),
@@ -895,7 +909,6 @@ DMA_Res <- MetaProViz::DMA(
     SaveAs_Table = NULL)
 ```
 
-
 ```{r}
 #| eval: true
 #| echo: false
@@ -904,18 +917,19 @@ DMA_Res <- MetaProViz::DMA(
 #| results: false
 
 DMA_Res[["ShapiroTest"]][["DF"]] |>
-  as.data.frame() |>
-  dplyr::select(1:5) |>
-  kableExtra::kbl(caption = "`Shaprio.test` results.") |>
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria", font_size = 12) 
+    as.data.frame() |>
+    dplyr::select(1:5) |>
+    kableExtra::kbl(caption = "`Shaprio.test` results.") |>
+    kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria", 
+        font_size = 12) 
 
 
-Fig3A <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["NAT"]] + 
-  #ggplot2::ggtitle("Normal distribution of NAT samples") +
-  ggplot2::labs(subtitle = "39.27% of metabolites are not normally distributed based on Shapiro test.")
+Fig3A <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["NAT"]] +
+    #ggplot2::ggtitle("Normal distribution of NAT samples") +
+    ggplot2::labs(subtitle = "39.27% of metabolites are not normally distributed based on Shapiro test.")
 
-Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]]+
-  ggplot2::labs(subtitle = "46.57% of metabolites are not normally distributed based on Shapiro test.")
+Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]] +
+    ggplot2::labs(subtitle = "46.57% of metabolites are not normally distributed based on Shapiro test.")
 
 
 ```
@@ -926,9 +940,10 @@ Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]]+
 #| message: true
 #| warning: false
 #| results: false
+#| fig.show: hide
 
-#InputData <- as.data.frame(t(SummarizedExperiment::assay(metabolomics))) |>
-#  dplyr::mutate(across(everything(), ~ tidyr::replace_na(.x, 0)))
+## InputData <- as.data.frame(t(SummarizedExperiment::assay(metabolomics))) |>
+##     dplyr::mutate(across(everything(), ~ tidyr::replace_na(.x, 0)))
 
 # Differential metabolite analysis
 DMA_Res_wilcox <- MetaProViz::DMA(
@@ -957,14 +972,15 @@ DMA_Res_wilcox <- MetaProViz::DMA(
 
 # data table inspection
 DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
-  as.data.frame() |>
-  dplyr::select(1,23:28) |>
-  dplyr::arrange(p.adj) |>
-  dplyr::slice(1:10) |>
-  kableExtra::kbl(caption = "DMA results Tumour versus Normal.") |>
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria", font_size = 12) 
+    as.data.frame() |>
+    dplyr::select(1, 23:28) |>
+    dplyr::arrange(p.adj) |>
+    dplyr::slice(1:10) |>
+    kableExtra::kbl(caption = "DMA results Tumour versus Normal.") |>
+    kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria", 
+        font_size = 12) 
 
-# Volcano plots
+## Volcano plots
 ## 1. t.test
 InputData <- DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
   tibble::column_to_rownames("Metabolite")
@@ -1057,8 +1073,10 @@ Fig3H <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 #| results: false
 
 row1 <- plot_grid(Fig3A, Fig3B, ncol = 2, labels = c("A", "B"))
-row2 <- plot_grid(Fig3C, Fig3D, Fig3E, ncol = 3, labels = c("C", "D", "E"),  rel_widths = c(0.85, 0.85, 1.3) )
-row3 <- plot_grid( Fig3F, Fig3G, Fig3H,NULL, ncol = 4, labels = c("F", "G", "H"),  rel_widths = c(0.85, 0.85, 0.85, 0.45) )
+row2 <- plot_grid(Fig3C, Fig3D, Fig3E, ncol = 3, 
+    labels = c("C", "D", "E"),  rel_widths = c(0.85, 0.85, 1.3) )
+row3 <- plot_grid(Fig3F, Fig3G, Fig3H, NULL, ncol = 4, 
+    labels = c("F", "G", "H"),  rel_widths = c(0.85, 0.85, 0.85, 0.45) )
 g <- plot_grid(row1, row2, row3, ncol = 1, rel_heights = c(0.7, 1, 1))
 
 ggsave(filename = "figure/figure3.jpg", 
@@ -1140,7 +1158,7 @@ elucidating signalling cascades [@Baker_2023, @Farr&Dimitrov2024].
 ### Annotated metabolites and coverage in the prior knowledge
 
 There are different points to consider when integrating metabolomics data with 
-prior knowledge, which can be divided in several steps:
+PK, which can be divided in several steps:
 
 1. Choose a database for metabolite IDs. Different to gene names, there are no
    standardized names for metabolites [@Pham2019, @Koistinen2023], 
@@ -1154,7 +1172,7 @@ prior knowledge, which can be divided in several steps:
    with different degrees of ambiguity [@Pham2019]. Experimentally different 
    degrees of ambiguity are needed due to the machine sensitivity, where for 
    example stereoisomers are not distinguished [@Dias2016]. Yet, standard 
-   metabolite-sets used as prior knowledge often
+   metabolite-sets used as PK often
    contain one specific metabolite ID, which can hinder mapping to the detected
    data [@Schmidt2025]. If metabolite detection is unspecific due to machine
    sensitivity, assign all possible metabolite IDs (Table 1) to ultimately
@@ -1181,32 +1199,15 @@ SettingsFile_Metab <-  merge(
 
 ```
 
-<!-- ::: {.table} -->
-
-Table 1: **Preview of selected metabolites to showcase ChEBI and HMDB information provided by Biocrates. Biocrates results provide all possible identifiers for each trivial metabolite name. For some metabolites multiple ChEBI and HMDB IDs are available, whilst for other metabolite those databases have no entry.** 
-
-| Trivial Name                | Class             | ChEBI                     | HMDB                    |
-|-----------------------------|-------------------|---------------------------|-------------------------|
-| *Ala*                       |Aminoacids         |15570, 16449, 16977, 76050 |HMDB0000161, HMDB0001310 |
-| *C0*                        |Acylcarnitines     |11060, 16347, 17126        |HMDB0000062              |
-| *Cer d16:1/18:0*            |Ceramides          |None                       |None                     |
-| *DG 16:0_20:3*              |Diacylglycerols    |84402                      |HMDB0007111              |
-
-
-: width="100%"
-
-: tbl-colwidths="28,17,17,21,17"
-
-<!-- ::: -->
-
 3. Visualize the available metabolite IDs for the detected 
    metabolites using an upset plot  and check available metabolite ID
-   types for metabolite classes (Figure 4 A). For instance, for Reactome [@Gillespie_2022], which uses ChEBI IDs for pathway enrichment analysis, only a
+   types for metabolite classes (Figure 4 A). For instance, for Reactome 
+   [@Gillespie_2022], which uses ChEBI IDs for pathway enrichment analysis, only a
    small subset of the detected metabolites will be included, which needs to be
    taken into consideration when interpreting the results biologically. In order
    to ensure the maximum overlap between measured metabolites and prior knowledge
-   of choice we recommend assignment of multiple metabolite IDs dependent on the level of ambiguity to the detected
-   metabolites.
+   of choice we recommend assignment of multiple metabolite IDs dependent on 
+   the level of ambiguity to the detected metabolites.
    
 ```{r}
 #| eval: true
@@ -1235,32 +1236,33 @@ Fig4A <- MetaProViz:::GenerateUpset(
     output_file = NULL)
 ```
 
-4. Given the incomplete coverage in mass spectrometry-based metabolomics and hence the potential low coverage of the prior knowledge, adjust the choice of statistical tests. For metabolomics, methods such as ORA should generally perform well since the method offers the ability to restrict the background to the detected metabolites (assay-specific background) [@Wieder2021].
+4. Given the incomplete coverage in mass spectrometry-based metabolomics and hence the potential low coverage of the PK, adjust the choice of statistical tests. For metabolomics, methods such as ORA should generally perform well since the method offers the ability to restrict the background to the detected metabolites (assay-specific background) [@Wieder2021].
 
 ### Available prior knowledge for metabolites
 
-1. Choose a suitable database containing prior knowledge:
+1. Choose a suitable database containing PK:
 
-- For classical mappings with metabolite sets, those can be obtained from 
-  databases such as KEGG, Reactome or WikiPathways, *RaMP-DB*, *Omnipath*, *MetSigDB* 
-  (*choice of user*): 
+- For classical mappings with metabolite sets, obtain PK from 
+  databases such as *KEGG*, *Reactome* or *WikiPathways*, *RaMP-DB*, 
+  *Omnipath*, or *MetSigDB* (*choice of user*): 
   a) *RaMP-DB* [@Braisted2023] has combined many classical resources trying to 
   account for mismappings between the original resources by using molecular
-  weight. Apart from classical pathway-metabolite sets such as wikipathways, *RaMP-DB* [@Braisted2023] 
+  weight. Apart from classical pathway-metabolite sets such as wikipathways, 
+  *RaMP-DB* [@Braisted2023] 
   has used *ClassyFire* [@DjoumbouFeunang2016] to assign 
   chemical classes to the metabolites based on their structural components. Chemical 
   class-metabolite sets can be used to 
   understand if certain compound classes are altered in the comparison of
   interest [@Braisted2023]. 
-  b) *Omnipath* [@Türei2016, @Türei2021] a database of molecular biology prior
-  knowledge combines data from more than 1000 resources and incorporates many
+  b) *Omnipath* [@Türei2016, @Türei2021] a database of molecular biology PK
+  combines data from more than 1000 resources and incorporates many
   database clients containing metabolites and utilities for metabolite 
-  identifier translation. Hence, apart from pathway-metabolite sets *Omnipath metabo*
+  identifier translation. Apart from pathway-metabolite sets *Omnipath*
   also offers many other ontology information.
   c) To explore signalling function of metabolites by binding 
-  to receptors, you can use *MetalinksDB* [@Farr&Dimitrov2024].
+  to receptors, use *MetalinksDB* [@Farr&Dimitrov2024].
   *MetalinksDB* contains information about metabolite-receptor and metabolite-transporter 
-  interaction, as well as weather the binding of the metabolite to a receptor is activating 
+  interaction, as well as whether the binding of the metabolite to a receptor is activating 
   or inhibiting [@Farr&Dimitrov2024]. Using *MetalinksDB* not only enables 
   combined pathway enrichment analysis on metabolite-gene sets or building 
   a network of those interactions, but also adds biological value by 
@@ -1274,9 +1276,9 @@ Fig4A <- MetaProViz:::GenerateUpset(
   reaction prior knowledge network [@Dugourd_2021] to convert any gene set to
   gene-metabolite sets, which can be used to perform combined enrichment 
   analysis [@Schmidt2025].
-  e) When working with human data, the prior knowledge network 
+  e) When working with human data, the PKN
   *ocean* includes a manually curated reduced model of human metabolism based 
-  on redHUMAN of Recon3D and has developed a specific adaptation of the 
+  on *redHUMAN* of *Recon3D* and has developed a specific adaptation of the 
   weighted mean, using enzyme distance to weight interaction, to perform
   enrichment analysis [@Sciacovelli&Dugourd2022]. *ocean* explores coordinated
   deregulations of metabolite abundances to generate a metabolic footprint for
@@ -1295,8 +1297,8 @@ Fig4A <- MetaProViz:::GenerateUpset(
    genome scale metabolic models, which cover the whole reaction in an organism,
    and those models have not been adapted for the coverage in a metabolomics
    experiments. We recommend to exclude those metabolites prior to performing
-   enrichment analysis. *MetaProViz* has already done this and provides pathway-
-   metabolite sets without unspecific metabolites [@Schmidt2025].
+   enrichment analysis. *MetaProViz* provides pathway-metabolite sets 
+   without unspecific metabolites [@Schmidt2025].
 
 ```{r}
 #| eval: true
@@ -1322,13 +1324,13 @@ MetaLinksDB_Res <- MetaProViz::LoadMetalinks()
 
 The biological interpretation of the results is crucial and should be done in the context of the biological question and the experimental design. Here it is important to take into account multiple points:
 
-1. Understand the limitations of the prior knowledge used, such as potential biases in the underlying original resources. For example, if the prior knowledge is based on a specific database, it may not capture all relevant metabolites or pathways. This can lead to biased results and misinterpretation of the data. Moreover, the  choice of prior knowledge dictates the biological question one can address as discussed in the paragraph above for classical pathway-metabolite sets, chemical class-metabolite sets or receptor-metabolite sets.
+1. Understand the limitations of the PK used, such as potential biases in the underlying original resources. For example, if the PK is based on a specific database, it may not capture all relevant metabolites or pathways. This can lead to biased results and misinterpretation of the data. Moreover, the  choice of PK dictates the biological question one can address as discussed in the paragraph above for classical pathway-metabolite sets, chemical class-metabolite sets or receptor-metabolite sets.
 
-2. Understand the coverage of your experimental data in the prior knowledge resource. If the prior knowledge only includes metabolites that are available in, for example, HMDB, this would in turn exclude many detected ceramides, glycosylceramides and triglycerols, whilst using ChEBI IDs would exclude almost all triacylglycerols (Figure 4 A-D). Here, triacylglycerols include 226 metabolites of which only 11 have a ChEBI ID (Figure 4 D). If the results of the enrichment analysis do not show those pathways as significantly altered, it does not mean that they are not altered, but rather that the prior knowledge used is not able to capture them. Consequently, it is important not to over-interpret the importance of the most altered pathways, but rather to use them as a starting point for further investigation not ignoring the detected metabolites that were not covered by the prior knowledge resource. 
+2. Understand the coverage of your experimental data in the PK resource. If the PK only includes metabolites that are available in, for example, HMDB, this would in turn exclude many detected ceramides, glycosylceramides and triglycerols, whilst using ChEBI IDs would exclude almost all triacylglycerols (Figure 4 A-D). Here, triacylglycerols include 226 metabolites of which only 11 have a ChEBI ID (Figure 4 D). If the results of the enrichment analysis do not show those pathways as significantly altered, it does not mean that they are not altered, but rather that the PK used is not able to capture them. Consequently, it is important not to over-interpret the importance of the most altered pathways, but rather to use them as a starting point for further investigation not ignoring the detected metabolites that were not covered by the PK resource. 
 
-3. (optional) Combine multiple prior knowledge resources to increase the coverage of the detected metabolites.
+3. (optional) Combine multiple PK resources to increase the coverage of the detected metabolites.
 
-4. Check how many metabolites of e.g. a pathway in the prior knowledge have been detected. For example, if a pathway only contains 20 metabolites and 13 of them are detected (65%), this is a stronger evidence than detecting 40 metabolites of a pathway containing 110 metabolites (36%). 
+4. Check how many metabolites of e.g. a pathway in the PK have been detected. For example, if a pathway only contains 20 metabolites and 13 of them are detected (65%), this is a stronger evidence than detecting 40 metabolites of a pathway containing 110 metabolites (36%). 
 
 ```{r}
 #| eval: true
@@ -1338,16 +1340,16 @@ The biological interpretation of the results is crucial and should be done in th
 #| results: false
 #| fig.show: "hide"
   
-  DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
-  tibble::column_to_rownames("Metabolite") |>
-  dplyr::filter(class %in% c("Ceramides", "Triacylglycerols", "Glycosylceramides"))
+InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
+    tibble::column_to_rownames("Metabolite") |>
+    dplyr::filter(class %in% c("Ceramides", "Triacylglycerols", "Glycosylceramides"))
                     
 SettingsFile_Metab <- merge(
-        x = as.data.frame(rowData(metabolomics))[, c(1:2)],
-        y = FeatureMetadata_Biocrates[, c(2:3, 5, 7, 11)],
-        by.x = "feature_original",
-        by.y = "TrivialName_Prior2023",
-        all.x = TRUE) |>
+      x = as.data.frame(rowData(metabolomics))[, 1:2],
+      y = FeatureMetadata_Biocrates[, c(2:3, 5, 7, 11)],
+      by.x = "feature_original",
+      by.y = "TrivialName_Prior2023",
+      all.x = TRUE) |>
     mutate(
         combined_id = case_when(
             !is.na(CHEBI) & !is.na(HMDB) & !is.na(LIMID) ~ "CHEBI-HMDB-LIMID",
@@ -1365,7 +1367,6 @@ SettingsFile_Metab <- merge(
         combined_label = paste0(combined_id, ": ", n_combination)) |>
     ungroup() |>
     tibble::column_to_rownames("feature")
-  
 
 ## plot 
 Res <- MetaProViz::VizVolcano(
@@ -1393,7 +1394,7 @@ Fig4D <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 #| warning: false
 #| results: false
 
-# Combine the differential results with the metabolite IDs:
+## combine the differential results with the metabolite IDs:
 InputData <- merge(
     x = DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]],
     y = SettingsFile_Metab,
@@ -1401,7 +1402,7 @@ InputData <- merge(
     by.y = "feature",
     all.x = TRUE)
 
-#Expand the metabolite IDs:
+## expand the metabolite IDs:
 DetectedIDs <- InputData|>
   dplyr::select("Metabolite", "HMDB")|>
   tidyr::drop_na()|>
@@ -1412,14 +1413,14 @@ DetectedIDs <- InputData|>
       mutate("OriginalEntry_InputData" := paste0("InputData_", dplyr::cur_group_id())) |>
       ungroup()
 
-#Merge the Data withg the prior knowledge to inspect potential issues:
+## merge the Data withg the prior knowledge to inspect potential issues:
 merged_df <- merge(ChemicalClass, 
                    DetectedIDs, 
                    by.x= "class_source_id",  
                    by.y= "HMDB", 
                    all.y=TRUE)
 
-# If you inspect the table you will see that especially amino-acids will map to multiple entries, yet they have the same value. So for enrichment analysis this will need to be considered, either by removing one of the IDs or dependent on the context take this into account for the interpretation of the results when using this for enrichment analysis.
+## if you inspect the table you will see that especially amino-acids will map to multiple entries, yet they have the same value. So for enrichment analysis this will need to be considered, either by removing one of the IDs or dependent on the context take this into account for the interpretation of the results when using this for enrichment analysis.
 ```
 
 ```{r}
@@ -1429,40 +1430,45 @@ merged_df <- merge(ChemicalClass,
 #| warning: false
 #| results: false
 
-#If you seek to use for example the MOFA results instead of the differential analysis, you can do this by:
-#Extracting Factor of interest (here Factor 1 as it separates Tumour and Normal well)
+## if you seek to use for example the MOFA results instead of the differential 
+## analysis, you can do this by:
+## extracting Factor of interest (here Factor 1 as it separates Tumour and 
+## Normal)
 
-FactorsMetab <- get_weights(MOFAobject, views = "metabolomics")$metabolomics|>
-  as.data.frame()|>
-  tibble::rownames_to_column("metabolite")
+FactorsMetab <- get_weights(MOFAobject, views = "metabolomics")$metabolomics |>
+    as.data.frame() |>
+    tibble::rownames_to_column("metabolite")
 
 FactorsProt <- get_weights(MOFAobject, views = "proteomics")$proteomics|>
-  as.data.frame()
+    as.data.frame()
 
-#Merging with the feature metainformation needed to integrate with prior knowledge:
-FactorsProt <- merge(x= FactorsProt,
-                     y= as.data.frame(rowData(proteomics)),
-                     by=0,
-                     all.x=TRUE) |>
-   dplyr::mutate(gene = stringr::str_extract(as.character(fasta_header), "(?<=GN=)[^ ]+"))|>
-   dplyr::filter(!is.na(gene)) |>
-   dplyr::group_by(gene) |>
-   dplyr::slice_max(order_by = abs(Factor1), n = 1, with_ties = FALSE) |>
-   dplyr::ungroup()
+## Merging with the feature metainformation needed to integrate with 
+## prior knowledge
+FactorsProt <- merge(x = FactorsProt,
+        y = as.data.frame(rowData(proteomics)),
+        by = 0,
+        all.x = TRUE) |>
+    dplyr::mutate(gene = stringr::str_extract(as.character(fasta_header), "(?<=GN=)[^ ]+"))|>
+    dplyr::filter(!is.na(gene)) |>
+    dplyr::group_by(gene) |>
+    dplyr::slice_max(order_by = abs(Factor1), n = 1, with_ties = FALSE) |>
+    dplyr::ungroup()
 
-#Now we can for example use decoupleR and the Gaude pathways to perform enrichment analysis of Factor1 proteins for metabolic enzymes:
-Gaude_Pathways$weight <- 1 #needed to run ulm/mlm
+## now we can for example use decoupleR and the Gaude pathways to perform 
+## enrichment analysis of Factor1 proteins for metabolic enzymes:
+Gaude_Pathways$weight <- 1 ## needed to run ulm/mlm
 
-Input <- FactorsProt [,c(19,2)]|>
-  tibble::column_to_rownames("gene")
+Input <- FactorsProt [, c(19, 2)] |>
+    tibble::column_to_rownames("gene")
 
-decoupler_res <- decoupleR::run_ulm(mat=as.matrix(Input), 
-                                          net=Gaude_Pathways, 
-                                          .source='term', 
-                                          .target='gene',
-                                          .mor='weight', 
-                                          minsize = 5) # Minimum of target features per biological entity. 
-
+decoupler_res <- decoupleR::run_ulm(
+    mat = as.matrix(Input), 
+    net=Gaude_Pathways, 
+    .source = "term", 
+    .target = "gene",
+    .mor = "weight", 
+    ## minimum of target features per biological entity
+    minsize = 5) 
 ```
 
 ```{r figure_4}
@@ -1471,25 +1477,25 @@ decoupler_res <- decoupleR::run_ulm(mat=as.matrix(Input),
 #| message: false
 #| warning: false
 #| results: false
-
-
-row1 <- plot_grid(Fig4A, Fig4B, ncol = 2, labels = c("A", "B"), rel_widths = c(1.6, 1.2))
-row2 <- plot_grid(Fig4C, Fig4D, ncol = 2, labels = c( "C", "D"), rel_widths = c(1.6, 1.2) )
+row1 <- plot_grid(Fig4A, Fig4B, ncol = 2, labels = c("A", "B"), 
+    rel_widths = c(1.6, 1.2))
+row2 <- plot_grid(Fig4C, Fig4D, ncol = 2, labels = c( "C", "D"), 
+    rel_widths = c(1.6, 1.2) )
 g <- plot_grid(row1, row2, ncol = 1, rel_heights = c(1.5, 1))
 
 ggsave(filename = "figure/figure4.jpg", 
-       plot = g, 
-       device = "jpg", 
-       dpi = 600, 
-       width = 12.2, 
-       height = 13) 
+    plot = g, 
+    device = "jpg", 
+    dpi = 600, 
+    width = 12.2, 
+    height = 13) 
 ```
 
 ## Experimental network analysis using statistical methods
 
-Statistical analysis uncovers pairwise relationships between metabolites and/or proteins within each modality. The analysis can be done to assess the co-occurence, association, or regulation of features within a dataset without any prior knowledge. The calculation of pairwise coefficients is often done via the Pearson or Spearman correlation calculation methods, which are useful for exploratory analysis to identify correlated feature pairs, suggesting potential biological relationships or shared pathways (guilt-by-association principle). Other methods may be more suitable depending on the research question, such as ARACNE (Algorithm for the Reconstruction of Accurate Cellular Networks), Bayesian network learning, CLR (Context Likelihood of Relatedness), GGM (Gaussian Graphical model),  linear regression using LASSO (Least Absolute Shrinkage and Selection Operator) regularization, partial Pearson correlation, Random Forest, or partial Spearman correlation. In the resulting network, vertices represent features, such as metabolites or proteins, while edges represent the statistical relationship between them, such as correlation coefficients.
+Statistical analysis uncovers pairwise relationships between metabolites and/or proteins within each modality. The analysis can be done to assess the co-occurence, association, or regulation of features within a dataset without any PK. The calculation of pairwise coefficients is often done via the *Pearson* or *Spearman correlation* calculation methods, which are useful for exploratory analysis to identify correlated feature pairs, suggesting potential biological relationships or shared pathways (guilt-by-association principle). Other methods may be more suitable depending on the research question, such as *ARACNE* (Algorithm for the Reconstruction of Accurate Cellular Networks), *Bayesian network learning*, *CLR* (Context Likelihood of Relatedness), *GGM* (Gaussian Graphical model),  linear regression using *LASSO* (Least Absolute Shrinkage and Selection Operator) regularization, *partial Pearson correlation*, *Random Forest*, or *partial Spearman correlation*. In the resulting network, vertices represent features, such as metabolites or proteins, while edges represent the statistical relationship between them, such as correlation coefficients.
 
-We will showcase the creation of statistical networks based on the implemented functionality of the MetNet [@Naake2019] package.
+We will showcase the creation of statistical networks based on the implemented functionality of the *MetNet* [@Naake2019] package.
 
 1.  Choose an algorithm based on the data and biological question:
 
@@ -1504,7 +1510,7 @@ We will showcase the creation of statistical networks based on the implemented f
 -   *Spearman correlation* captures monotonic (rank-based) relationships between feature expression/abundance levels. The algorithm may be used when the data does not follow a normal distribution or when looking for ranked relationships. It is robust to outliers and captures non-linear relationships. The algorithm is less powerful for detecting direct gene interactions.
 - *Partial Spearman correlation* is similar to partial Pearson correlation but for rank-based dependencies. The algorithm controls for confounding variables while dealing with non-linear relationships. It handles non-linearity and indirect interactions. It is less widely used in regulatory network inference and may be computationally demanding.
 
-2.  Calculate the adjacency matrix using the `MetNet` package [@Naake2019]. Specify the algorithms to be run. (optional) Prior to running the model, check if the model tolerates missing values (*NA*) and impute values if needed. (optional) Apply the Benjamini-Hochberg method or any other method for adjustment for p-value adjustment for Pearson and Spearman correlation. The result of each algorithm is stored in a respective assay of the *AdjacencyMatrix* object, an extension of the *SummarizedExperiment* class. Note, that depending on the chosen algorithm, the adjacency matrices are not necessarily symmetric.
+2.  Calculate the adjacency matrix using the *MetNet* package [@Naake2019]. Specify the algorithms to be run. (optional) Prior to running the model, check if the model tolerates missing values (*NA*) and impute values if needed. (optional) Apply the Benjamini-Hochberg method or any other method for adjustment for p-value adjustment for Pearson and Spearman correlation. The result of each algorithm is stored in a respective assay of the *AdjacencyMatrix* object, an extension of the *SummarizedExperiment* class. Note, that depending on the chosen algorithm, the adjacency matrices are not necessarily symmetric.
 
 ```{r network_statistical}
 #| eval: true
@@ -1607,6 +1613,7 @@ attributes_df <- get_weights(MOFAobject)$metabolomics |>
 attributes_df <- cbind(name = rownames(get_weights(MOFAobject)$metabolomics), 
     attributes_df)
 g_keep <- add_vertex_attributes(g = g_keep, attributes = attributes_df)
+layout_g_keep <- layout.auto(g_keep)
 
 ## create a color gradient: Blue (low) → White (neutral) → Red (high)
 colors <- colorRampPalette(c("blue", "white", "red"))(100)  # 100 gradient steps
@@ -1619,7 +1626,8 @@ V(g_keep)$color <- colors[factor1_scaled]
 
 png("figure/figure5_network_factor1.png")
 graphics::layout(matrix(c(1, 2), nrow = 2), heights = c(12, 1)) 
-plot(g_keep, vertex.label = NA, vertex.size = 3, legend = TRUE)
+plot(g_keep, vertex.label = NA, vertex.size = 3, legend = TRUE, 
+    layout = layout_g_keep)
 
 min_val <- round(min(V(g_keep)$Factor1), digits = 2)
 max_val <- round(max(V(g_keep)$Factor1), digits = 2 )
@@ -1691,7 +1699,7 @@ g_keep <- add_vertex_attributes(g = g_keep, attributes = attributes_df)
 V(g_keep)$color <- as.factor(V(g_keep)$infomap)
 
 png("figure/figure5_network_infomap.png")
-plot(g_keep, vertex.label = NA, vertex.size = 3)
+plot(g_keep, vertex.label = NA, vertex.size = 3, layout = layout_g_keep)
 dev.off()
 ```
 
@@ -1727,8 +1735,6 @@ This chapter demonstrated how to perform metabolomics data analysis in *R* using
 
 In order to interpret a metabolomics experiment in its entirety, it is important to understand the limitations of the prior knowledge used, the coverage of the experimental data in the prior knowledge resource, the impact of metabolite set inflation and deflation on the results and the choice of statistical method used for enrichment analysis. Researchers should not solely rely on pathway analysis and often it is more beneficial to perform literature searches for the most altered metabolites, extract metabolite receptors that could be targeted by the altered metabolites or transporters that could release the metabolites into the environment. All of this will require close collaboration between data scientists and experimentalists in the future.
 
-# References
-
 
 # Figure Captions/Table Captions/Tables
 
@@ -1741,19 +1747,84 @@ D: Matrix of Euclidean distances between samples of transformed data.
 E: PCA of raw data. F: PCA of transformed data. Log-transformation increases
 variation on prinpical component 1 and 2.
 
-Figure 2:
-
+Figure 2: Multi-omics factor analysis diagnostic and loading plots.
+A: Variance explained by Factors 1-5 in the metabolomics and proteomics layers.
+B: Sample-based Pearson correlation coefficients between MOFA factors and metadata variables.
+C: Scatterplot of Factor values for each sample for Factor 1 and Factor 2. Factor 1 separates the samples along the NAT-TU axis.
+D: Heatmap of transformed metabolite values for Factor 1. Shown are the top seven metabolites with the highest absolute loadings.
+ 
 Figure 3: One-versus-one differential expression analysis between tumour (TU) versus normal adjacent tumour (NAT). 
 A: Data distribution for each metabolite abundance of NAT
 B: Data distribution for each metabolite abundance of TU. The Shapiro test results shows that the majority of the metabolites follow mostly a normal distribution, which means it is appropriate to perform a t-test. It is important to note that almost half of the metabolites are not normally distributed, which means that the t-test may not be appropriate for these metabolites. In this case, it might be better to use a non-parametric test such as the Wilcoxon rank-sum test or Kruskal-Wallis test.
 C-H: Volcano plots of differential analysis comparing TU versus NAT using either the t-test and FDR adjustment (C) or the Wilcoxon rank-sum test and FDR adjustment (D-H). E is colour-coded based on the metabolite class as defined by Biocrates, whilst F-H) are selected metabolite panels based on Biocrates class.
-
-
  
-
-
 Figure 4:
 A: Upset plot of the metabolites IDs of the detected metabolites in the Biocrates example dataset colour coded for the Biocrates defined metabolite classes.
 B-D: Volcano plots of differential analysis comparing TU versus NAT using the Wilcoxon rank-sum test and FDR adjustment, selecting for metabolite panels based on Biocrates class and colour coding for the available metabolite ID types.
+ 
+Figure 5: Statistical network analysis of metabolomics data.
+A: Histogram of coefficients of Pearson correlation-based network.
+B: Histogram of corresponding adjusted p-values of Pearson correlation-based network using the Benjamini-Hochberg method).
+C: Thresholded network based on Pearson and Spearman correlation. Each node represents a metabolite and is colored according to its MOFA Factor 1 loading. Edges were retained if the
+ absolute correlation coefficient was > 0.8 (Pearson) and > 0.7 (Spearman), with corresponding adjusted p-values < 0.05 using the Benjamini-Hochberg method.
+D: Thresholded network based on Pearson and Spearman correlation. Nodes represent metabolites and are colored according by community membership based on the Infomap community detection algorithm. 
 
-Figure 5:
+```{r table_metabolites_chebi_hmdb}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: true
+## create the table
+df <- tribble(
+    ~`Trivial Name`, ~Class, ~ChEBI, ~HMDB,
+    "*Ala*",            "Aminoacids",      "15570, 16449, 16977, 76050", "HMDB0000161, HMDB0001310",
+    "*C0*",             "Acylcarnitines",  "11060, 16347, 17126",        "HMDB0000062",
+    "*Cer d16:1/18:0*", "Ceramides",       "None",                       "None",
+    "*DG 16:0_20:3*",   "Diacylglycerols", "84402",                      "HMDB0007111")
+ 
+## create and render the table with kableExtra
+kbl(df, format = "pandoc", 
+    caption = "Table 1: **Preview of selected metabolites to showcase ChEBI and HMDB information provided by Biocrates. Biocrates results provide all possible identifiers for each trivial metabolite name. For some metabolites multiple ChEBI and HMDB IDs are available, whilst for other metabolites those databases have no entry.**", escape = FALSE
+ ) |>
+    kable_styling(full_width = TRUE) |>
+    column_spec(1, width = "4cm") |>  # Trivial Name column
+    column_spec(2, width = "3cm") |>  # Class column
+    column_spec(3, width = "4cm") |>  # ChEBI column
+    column_spec(4, width = "4cm")     # HMDB column
+```
+ 
+```{r table_community_detection}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: true
+ 
+## create the table
+df <- tribble(
+    ~algorithm, ~undirected, ~directed, ~unweighted, ~weighted,
+    "*cluster_edge_betweenness*",  "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$",
+    "*cluster_fast_greedy*",       "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$",
+    "*cluster_fluid_communities*", "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\times$$",
+    "*cluster_infomap*",           "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$",
+    "*cluster_label_prop*",        "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$",
+    "*cluster_leading_eigen*",     "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$",
+    "*cluster_leiden*",            "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$",
+    "*cluster_louvain*",           "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$",
+    "*cluster_optimal*",           "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$", "$$\\checkmark$$",
+    "*cluster_spinglass*",         "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$",
+    "*cluster_walktrap*",          "$$\\checkmark$$", "$$\\times$$",     "$$\\checkmark$$", "$$\\checkmark$$"
+)
+ 
+## render the table
+kbl(df, format = "pandoc", 
+        caption = "Table 2: **Compatibility of community detection algorithms with network properties**",
+        escape = FALSE
+    ) |>
+    kable_styling(full_width = TRUE) |>
+    column_spec(column = 1, width = "6 cm") |> ## algorithm column wider
+    column_spec(column = 2:5, width = "2 cm")  ## other columns narrower
+```
+
+# References
