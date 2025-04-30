@@ -31,10 +31,30 @@ if (!require("BiocManager", quietly = TRUE)) {
     BiocManager::install(version = "3.20")
 }
 
+## AnnotationDbi
+if (!require("AnnotationDbi", quietly = TRUE))
+    BiocManager::install("AnnotationDbi")
+library("AnnotationDbi")
+
+## circlize
+if (!require("circlize", quietly = TRUE))
+    BiocManager::install("circlize")
+library("circlize")
+
+## ComplexHeatmap
+if (!require("ComplexHeatmap", quietly = TRUE))
+    BiocManager::install("ComplexHeatmap")
+library("ComplexHeatmap")
+
 ## cowplot
 if (!require("cowplot", quietly = TRUE))
     BiocManager::install("cowplot")
 library("cowplot")
+
+## decoupleR
+if (!require("decoupleR", quietly = TRUE))
+    BiocManager::install("decoupleR")
+library("decoupleR")
 
 ## dplyr
 if (!require("dplyr", quietly = TRUE))
@@ -46,6 +66,11 @@ if (!require("fields", quietly = TRUE))
     BiocManager::install("fields")
 library("fields")
 
+## ggnewscale
+if (!require("ggnewscale", quietly = TRUE))
+    BiocManager::install("ggnewscale")
+library("ggnewscale")
+
 ## ggplot2
 if (!require("ggplot2", quietly = TRUE))
     BiocManager::install("ggplot2")
@@ -55,6 +80,11 @@ library("ggplot2")
 if (!require("ggplotify", quietly = TRUE))
     BiocManager::install("ggplotify")
 library("ggplotify")
+
+## grid
+if (!require("grid", quietly = TRUE))
+    BiocManager::install("grid")
+library("grid")
 
 ## igraph
 if (!require("igraph", quietly = TRUE))
@@ -101,10 +131,30 @@ if (!require("org.Hs.eg.db", quietly = TRUE))
     BiocManager::install("org.Hs.eg.db")
 library("org.Hs.eg.db")
 
+## scales
+if (!require("scales", quietly = TRUE))
+    BiocManager::install("scales")
+library("scales")
+
+## stringr
+if (!require("stringr", quietly = TRUE))
+    BiocManager::install("stringr")
+library("stringr")
+
 ## SummarizedExperiment
 if (!require("SummarizedExperiment", quietly = TRUE))
     BiocManager::install("SummarizedExperiment")
 library("SummarizedExperiment")
+
+## tibble
+if (!require("tibble", quietly = TRUE))
+    BiocManager::install("tibble")
+library("tibble")
+
+## tidyr
+if (!require("tidyr", quietly = TRUE))
+    BiocManager::install("tidyr")
+library("tidyr")
 
 ## vsn
 if (!require("vsn", quietly = TRUE))
@@ -206,7 +256,7 @@ colnames(metabolomics) <- metabolomics$name
 colData(metabolomics) <- colData(metabolomics)[, c("name", "tissue")]
 
 ## add information on patient_ID
-metabolomics$patient_ID <- stringr::str_remove(metabolomics$name, 
+metabolomics$patient_ID <- str_remove(metabolomics$name, 
     pattern = "NAT_|TU_") |>
     as.numeric()
 
@@ -221,12 +271,12 @@ proteomics <- proteomics[, grep(colnames(proteomics), pattern = "ProtMet")]
 
 ## harmonize sample names
 proteomics$name <- colnames(proteomics) |>
-    stringr::str_remove(pattern = "LFQ.intensity.._KL_") |>
-    stringr::str_remove(pattern = "ProtMet_IO_40min_DDA_") |>
+    str_remove(pattern = "LFQ.intensity.._KL_") |>
+    str_remove(pattern = "ProtMet_IO_40min_DDA_") |>
     strsplit(split = "_") |>
     lapply(FUN = function(i) i[1]) |>
     unlist() |>
-    stringr::str_remove(pattern = "l$")
+    str_remove(pattern = "l$")
 df_names <- data.frame(
     rbind(
         c("1", "8JDLQY"),
@@ -250,7 +300,7 @@ colnames(proteomics) <- proteomics$name
 colData(proteomics) <- colData(proteomics)[, c("name", "tissue")]
 
 ## add information on patient_ID
-proteomics$patient_ID <- stringr::str_remove(proteomics$name, 
+proteomics$patient_ID <- str_remove(proteomics$name, 
     pattern = "NAT_|TU_") |>
     as.numeric()
 
@@ -306,11 +356,11 @@ metadata$recurrence <- as.factor(metadata$recurrence)
 ## link metadata to colData of metabolomics and proteomics
 colData(metabolomics) <- colData(metabolomics) |>
     as.data.frame() |>
-    dplyr::left_join(y = metadata, by = "patient_ID") |>
+    left_join(y = metadata, by = "patient_ID") |>
     DataFrame(row.names = colData(metabolomics)$name)
 colData(metabolomics) <- colData(proteomics) |>
     as.data.frame() |>
-    dplyr::left_join(y = metadata, by = "patient_ID") |>
+    left_join(y = metadata, by = "patient_ID") |>
     DataFrame(row.names = colData(proteomics)$name)
 
 ## add Symbol names to rowData of proteomics
@@ -602,7 +652,6 @@ MOFAobject <- prepare_mofa(
 )
 
 ## initialize MOFA model
-#reticulate::py_install("mofapy2")
 MOFAobject <- run_mofa(MOFAobject, 
     use_basilisk = FALSE)
 ```
@@ -670,9 +719,9 @@ apply(.var, MARGIN = 1,
     apply(MARGIN = 2, 
         FUN = function(column_i) ifelse(column_i >= 30, "active", "inactive")) |>
     as.data.frame() |>
-    tibble::rownames_to_column(var = "dataset") |>
-    tidyr::pivot_longer(cols = starts_with("F"), names_to = "Factor") |>
-    dplyr::mutate(dataset = factor(dataset),
+    rownames_to_column(var = "dataset") |>
+    pivot_longer(cols = starts_with("F"), names_to = "Factor") |>
+    mutate(dataset = factor(dataset),
         value = factor(value), 
         Factor = factor(Factor, levels = rownames(.var))) |>
     ggplot(aes(x = dataset, y = Factor, fill = value)) +
@@ -695,8 +744,8 @@ be retrieved from the *colData* slot of the *SummarizedExperiment* objects.
 ## define covariates and add to metadata
 covariates <- colData(metabolomics) |>
     as.data.frame() |>
-    dplyr::select(-c(histology))
-MOFAobject@samples_metadata <- dplyr::left_join(
+    select(-c(histology))
+MOFAobject@samples_metadata <- left_join(
     MOFAobject@samples_metadata, 
     covariates, by = c("sample" = "name"))
 ```
@@ -743,11 +792,11 @@ correlate_factors_with_covariates(MOFAobject,
 #| results: false
 #| fig-show: hide
 allFactors <- get_factors(MOFAobject, factors = "all", as.data.frame = TRUE) |>
-    tibble::as_tibble() |>
-    dplyr::mutate(factor = gsub("Factor","F", factor))
-allFactors <- dplyr::left_join(allFactors, covariates, by = c("sample" = "name"))
+    as_tibble() |>
+    mutate(factor = gsub("Factor","F", factor))
+allFactors <- left_join(allFactors, covariates, by = c("sample" = "name"))
 plotTab <- filter(allFactors, factor %in% c("F1", "F2", "F3", "F4", "F5")) |>
-    tidyr::spread(key = factor, value = value)
+    spread(key = factor, value = value)
 plotTab$tissue <- as.character(plotTab$tissue)
 plotTab$patient_ID <- as.factor(plotTab$patient_ID)
 plotTab$sex <- as.factor(plotTab$sex)
@@ -758,7 +807,7 @@ gg_factor1_factor2 <- ggplot(plotTab, aes(x = F1, y = F2)) +
         stroke = 2, size = 4) +
     scale_shape_manual(values = c(TU = 21, NAT = 22)) +
     guides(color = guide_legend(ncol = 2)) +
-    ggnewscale::new_scale_colour() +
+    new_scale_colour() +
     geom_point(aes(color = sex), size = 2) +
     guides(color = guide_legend(ncol = 2)) +
     xlab("Factor 1") + ylab("Factor 2") +
@@ -769,7 +818,7 @@ ggplot(plotTab, aes(x = F1, y = F2)) +
     geom_point(aes(x = F1, y = F2, color = tissue),
         stroke = 2, size = 4) +
     scale_color_manual(values = c(NAT = "#1F78B4", TU = "#FF7F00")) +
-    ggnewscale::new_scale_colour() +
+    new_scale_colour() +
     geom_point(aes(color = sex), size = 2) +
     scale_color_manual(values = c(f = "#33A02C", m = "#6A3D9A")) +
     xlab("Factor 1") + ylab("Factor 2") +
@@ -781,7 +830,7 @@ gg_factor1_factor3 <- ggplot(plotTab, aes(x = F1, y = F3)) +
     geom_point(aes(color = patient_ID, shape = tissue), stroke = 2, size = 4) +
     scale_shape_manual(values = c(TU = 21, NAT = 22)) +
     guides(color = guide_legend(ncol = 2)) +
-    ggnewscale::new_scale_colour() +
+    new_scale_colour() +
     geom_point(aes(color = sex), size = 2) +
     guides(color = guide_legend(ncol = 2)) +
     xlab("Factor 1") + ylab("Factor 3") +
@@ -896,10 +945,10 @@ To systematically define which statistical tests to consider one can follow thes
 InputData <- assay(metabolomics) |>
     t() |> 
     as.data.frame() |>
-    dplyr::mutate(across(everything(), ~ tidyr::replace_na(.x, 0)))
+    mutate(across(everything(), ~ replace_na(.x, 0)))
 
 ## differential metabolite analysis
-DMA_Res <- MetaProViz::DMA(
+DMA_Res <- DMA(
     InputData = InputData,
     SettingsFile_Sample = as.data.frame(colData(metabolomics)),
     SettingsInfo = c(Conditions ="tissue", Numerator = "TU" , Denominator = "NAT"),
@@ -921,18 +970,18 @@ DMA_Res <- MetaProViz::DMA(
 
 DMA_Res[["ShapiroTest"]][["DF"]] |>
     as.data.frame() |>
-    dplyr::select(1:5) |>
-    kableExtra::kbl(caption = "`Shaprio.test` results.") |>
-    kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria", 
+    select(1:5) |>
+    kbl(caption = "`Shaprio.test` results.") |>
+    kable_classic(full_width = FALSE, html_font = "Cambria", 
         font_size = 12) 
 
 
 Fig3A <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["NAT"]] +
-    #ggplot2::ggtitle("Normal distribution of NAT samples") +
-    ggplot2::labs(subtitle = "39.27% of metabolites are not normally distributed based on Shapiro test.")
+    ##ggplot2::ggtitle("Normal distribution of NAT samples") +
+    labs(subtitle = "39.27% of metabolites are not normally distributed based on Shapiro test.")
 
 Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]] +
-    ggplot2::labs(subtitle = "46.57% of metabolites are not normally distributed based on Shapiro test.")
+    labs(subtitle = "46.57% of metabolites are not normally distributed based on Shapiro test.")
 
 
 ```
@@ -946,10 +995,10 @@ Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]] +
 #| fig.show: hide
 
 ## InputData <- as.data.frame(t(SummarizedExperiment::assay(metabolomics))) |>
-##     dplyr::mutate(across(everything(), ~ tidyr::replace_na(.x, 0)))
+##     mutate(across(everything(), ~ replace_na(.x, 0)))
 
 # Differential metabolite analysis
-DMA_Res_wilcox <- MetaProViz::DMA(
+DMA_Res_wilcox <- DMA(
     InputData = InputData,
     SettingsFile_Sample= as.data.frame(colData(metabolomics)),
     SettingsInfo = c(Conditions = "tissue", Numerator = "TU" , Denominator = "NAT"),
@@ -977,19 +1026,19 @@ DMA_Res_wilcox <- MetaProViz::DMA(
 # data table inspection
 DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
     as.data.frame() |>
-    dplyr::select(1, 23:28) |>
-    dplyr::arrange(p.adj) |>
-    dplyr::slice(1:10) |>
-    kableExtra::kbl(caption = "DMA results Tumour versus Normal.") |>
-    kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria", 
+    select(1, 23:28) |>
+    arrange(p.adj) |>
+    slice(1:10) |>
+    kbl(caption = "DMA results Tumour versus Normal.") |>
+    kable_classic(full_width = FALSE, html_font = "Cambria", 
         font_size = 12) 
 
 ## Volcano plots
 ## 1. t.test
 InputData <- DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
-  tibble::column_to_rownames("Metabolite")
+  column_to_rownames("Metabolite")
 
-Res <- MetaProViz::VizVolcano(
+Res <- VizVolcano(
     InputData = InputData,
     SelectLab = NULL,
     ylab = "-log10(p.adj)",
@@ -1000,9 +1049,9 @@ Fig3C <- Res[["Plot_Sized"]][["Plot_Sized"]]
 
 
 InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
-    tibble::column_to_rownames("Metabolite")
+    column_to_rownames("Metabolite")
 
-Res <- MetaProViz::VizVolcano(
+Res <- VizVolcano(
     InputData = InputData,
     SelectLab = NULL,
     ylab = "-log10(p.adj)",
@@ -1022,13 +1071,13 @@ Fig3D <- Res[["Plot_Sized"]][["Plot_Sized"]]
 #| fig.show: "hide"
 
 InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
-    tibble::column_to_rownames("Metabolite")
+    column_to_rownames("Metabolite")
 
 SettingsFile_Metab <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
-    tibble::column_to_rownames("Metabolite") |>
-    dplyr::select(24:28)
+    column_to_rownames("Metabolite") |>
+    select(24:28)
 
-Res <- MetaProViz::VizVolcano(
+Res <- VizVolcano(
     InputData = InputData,
     SettingsInfo = c(color = "class"),
     SettingsFile_Metab = SettingsFile_Metab,
@@ -1049,14 +1098,14 @@ Fig3E <- Res[["Plot_Sized"]][["Plot_Sized"]]
 #| fig.show: hide
 
 InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
-    tibble::column_to_rownames("Metabolite") |>
-    dplyr::filter(class %in% c("Ceramides", "Triacylglycerols", "Sphingolipids"))
+    column_to_rownames("Metabolite") |>
+    filter(class %in% c("Ceramides", "Triacylglycerols", "Sphingolipids"))
                     
 SettingsFile_Metab <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
-    tibble::column_to_rownames("Metabolite") |>
-    dplyr::select(24:28)
+    column_to_rownames("Metabolite") |>
+    select(24:28)
 
-Res <- MetaProViz::VizVolcano(
+Res <- VizVolcano(
     InputData = InputData,
     SettingsInfo = c(individual = "class"),
     SettingsFile_Metab = SettingsFile_Metab,
@@ -1316,16 +1365,16 @@ Fig4A <- MetaProViz:::GenerateUpset(
 
 #We can load prior knowledge directly from MetaProViz:
 #1. metabolite-sets
-KEGG <- MetaProViz::LoadKEGG()
+KEGG <- LoadKEGG()
 
-ChemicalClass <- MetaProViz::LoadRAMP()
+ChemicalClass <- LoadRAMP()
 
 #2. gene-metabolite sets
-Gaude_Pathways <- MetaProViz::LoadGaude()
-Gaude_GeneMetab <- MetaProViz::Make_GeneMetabSet(Input_GeneSet=Gaude_Pathways,
-                                                     SettingsInfo=c(Target="gene"),
-                                                     PKName="Gaude")
-MetaLinksDB_Res <- MetaProViz::LoadMetalinks()
+Gaude_Pathways <- LoadGaude()
+Gaude_GeneMetab <- Make_GeneMetabSet(Input_GeneSet = Gaude_Pathways,
+    SettingsInfo = c(Target = "gene"),
+    PKName = "Gaude")
+MetaLinksDB_Res <- LoadMetalinks()
 ```
 
 ### Biological interpretation of the results
@@ -1349,8 +1398,8 @@ The biological interpretation of the results is crucial and should be done in th
 #| fig.show: hide
 
 InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
-    tibble::column_to_rownames("Metabolite") |>
-    dplyr::filter(class %in% c("Ceramides", "Triacylglycerols", "Glycosylceramides"))
+    column_to_rownames("Metabolite") |>
+    filter(class %in% c("Ceramides", "Triacylglycerols", "Glycosylceramides"))
                     
 SettingsFile_Metab <- merge(
         x = as.data.frame(rowData(metabolomics))[, 1:2],
@@ -1374,10 +1423,10 @@ SettingsFile_Metab <- merge(
     mutate(n_combination = n(),
         combined_label = paste0(combined_id, ": ", n_combination)) |>
     ungroup() |>
-    tibble::column_to_rownames("feature")
+    column_to_rownames("feature")
 
 ## plot 
-Res <- MetaProViz::VizVolcano(
+Res <- VizVolcano(
     InputData = InputData,
     SettingsInfo = c(individual = "Class", color = "combined_label"),
     SettingsFile_Metab = SettingsFile_Metab,
@@ -1411,14 +1460,14 @@ InputData <- merge(
 
 ## expand the metabolite IDs:
 DetectedIDs <- InputData |>
-  dplyr::select("Metabolite", "HMDB")|>
-  tidyr::drop_na()|>
-      mutate(row_id = dplyr::row_number())|>
-      mutate("OriginalEntry_InputData":= !!sym("HMDB")) |> # Store original values
-      tidyr::separate_rows("HMDB", sep = ",\\s*") |>
-      group_by(row_id) |>
-      mutate("OriginalEntry_InputData" := paste0("InputData_", dplyr::cur_group_id())) |>
-      ungroup()
+    select("Metabolite", "HMDB")|>
+    drop_na()|>
+    mutate(row_id = row_number())|>
+    mutate("OriginalEntry_InputData":= !!sym("HMDB")) |> # Store original values
+    separate_rows("HMDB", sep = ",\\s*") |>
+    group_by(row_id) |>
+    mutate("OriginalEntry_InputData" := paste0("InputData_", cur_group_id())) |>
+    ungroup()
 
 ## merge the Data with the prior knowledge to inspect potential issues:
 merged_df <- merge(ChemicalClass, 
@@ -1444,7 +1493,7 @@ merged_df <- merge(ChemicalClass,
 
 FactorsMetab <- get_weights(MOFAobject, views = "metabolomics")$metabolomics |>
     as.data.frame() |>
-    tibble::rownames_to_column("metabolite")
+    rownames_to_column("metabolite")
 
 FactorsProt <- get_weights(MOFAobject, views = "proteomics")$proteomics|>
     as.data.frame()
@@ -1455,20 +1504,20 @@ FactorsProt <- merge(x = FactorsProt,
         y = as.data.frame(rowData(proteomics)),
         by = 0,
         all.x = TRUE) |>
-    dplyr::mutate(gene = stringr::str_extract(as.character(fasta_header), "(?<=GN=)[^ ]+"))|>
-    dplyr::filter(!is.na(gene)) |>
-    dplyr::group_by(gene) |>
-    dplyr::slice_max(order_by = abs(Factor1), n = 1, with_ties = FALSE) |>
-    dplyr::ungroup()
+    mutate(gene = str_extract(as.character(fasta_header), "(?<=GN=)[^ ]+"))|>
+    filter(!is.na(gene)) |>
+    group_by(gene) |>
+    slice_max(order_by = abs(Factor1), n = 1, with_ties = FALSE) |>
+    ungroup()
 
 ## now we can for example use decoupleR and the Gaude pathways to perform 
 ## enrichment analysis of Factor1 proteins for metabolic enzymes:
 Gaude_Pathways$weight <- 1 ## needed to run ulm/mlm
 
 Input <- FactorsProt [, c(19, 2)] |>
-    tibble::column_to_rownames("gene")
+    column_to_rownames("gene")
 
-decoupler_res <- decoupleR::run_ulm(
+decoupler_res <- run_ulm(
     mat = as.matrix(Input), 
     net=Gaude_Pathways, 
     .source = "term", 
@@ -1591,7 +1640,8 @@ g <- graph_from_adjacency_matrix(assay(stat_adj_thr, "consensus"),
     weighted = FALSE, mode = "undirected")
 ```
 
-6.  (optional) Remove the singleton components and obtain the induced subgraph.
+6.  (optional) Remove the singleton components or small networks and obtain 
+the induced subgraph.
 
 ```{r network_graph_filtering}
 #| eval: true
@@ -1599,8 +1649,8 @@ g <- graph_from_adjacency_matrix(assay(stat_adj_thr, "consensus"),
 #| message: false
 #| warning: false
 #| results: false
-components_g <- igraph::components(g)
-components_keep <- which(components_g$csize > 1)
+components_g <- components(g)
+components_keep <- which(components_g$csize > 6)
 V_keep <- names(components_g$membership)[
     components_g$membership %in% components_keep]
 g_keep <- induced_subgraph(g, V_keep)
@@ -1626,13 +1676,13 @@ layout_g_keep <- layout.auto(g_keep)
 colors <- colorRampPalette(c("blue", "white", "red"))(100)  # 100 gradient steps
 
 ## normalize Factor1 values to fit within the color gradient index (1 to 100)
-factor1_scaled <- round(scales::rescale(V(g_keep)$Factor1, to = c(1, 100)))
+factor1_scaled <- round(rescale(V(g_keep)$Factor1, to = c(1, 100)))
 
 ## assign colors based on scaled Factor1 values
 V(g_keep)$color <- colors[factor1_scaled]
 
 png("figure/figure5_network_factor1.png")
-graphics::layout(matrix(c(1, 2), nrow = 2), heights = c(12, 1)) 
+layout(matrix(c(1, 2), nrow = 2), heights = c(12, 1)) 
 plot(g_keep, vertex.label = NA, vertex.size = 3, legend = TRUE, 
     layout = layout_g_keep)
 
@@ -1672,16 +1722,119 @@ is less effective for networks with overlapping communities.
 #| results: false
 
 attributes_df <- data.frame(
-    infomap = membership(cluster_infomap(g_keep, e.weights = E(g_keep))))
+    infomap = membership(cluster_infomap(g_keep, e.weights = E(g_keep))),
+    label_prop = membership(
+      cluster_label_prop(g_keep, weights = E(g_keep), mode = "all")))
 attributes_df <- cbind(name = rownames(attributes_df), 
     attributes_df)
 g_keep <- add_vertex_attributes(g = g_keep, attributes = attributes_df)
 
-## assign colors based on scaled Factor1 values
-V(g_keep)$color <- as.factor(V(g_keep)$infomap)
+## assign colors based on module membership
+##V(g_keep)$color <- as.factor(V(g_keep)$label_prop)
+all_memberships <- unique(V(g_keep)$label_prop)
+membership_factor <- factor(all_memberships)
+membership_colors <- setNames(
+    rand_color(length(membership_factor)),
+    levels(membership_factor)
+)
+## ensure V(g_keep)$membership is a factor with the same levels
+V(g_keep)$label_prop <- factor(V(g_keep)$label_prop, levels = levels(membership_factor))
+V(g_keep)$color <- membership_colors[as.character(V(g_keep)$label_prop)]
 
-png("figure/figure5_network_infomap.png")
+png("figure/figure5_network_module.png")
 plot(g_keep, vertex.label = NA, vertex.size = 3, layout = layout_g_keep)
+dev.off()
+```
+
+7. (optional) Depending on the biological question combine network structure with prior knowledge. For example, analyse the module composition via PK resources to check for metabolite classes. Use one-tailed Fisher's Exact test to check for overrepresentation of a given class.
+
+```{r network_pk}
+#| eval: true
+#| echo: false
+#| message: false
+#| warning: false
+#| results: false
+#| fig-show: hide
+attributes_df <- SettingsFile_Metab |>
+    rownames_to_column(var = "feature")
+g_keep <- add_vertex_attributes(g_keep, attributes_df, col_vertex = "feature")
+
+## create a data.frame with membership and class information
+df <- data.frame(membership = V(g_keep)$label_prop,
+    class = V(g_keep)$Class)
+
+## create a tbl with counts per class and membership 
+## filled as 0
+class_count <- df |>
+    group_by(membership, class) |>
+    summarise(count = n(), .groups = "drop") |>
+    pivot_wider(names_from = class, values_from = count, values_fill = 0)
+
+## extract the count matrix
+row_names <- class_count$membership
+count_mat <- as.matrix(class_count[, -1])
+rownames(count_mat) <- row_names
+
+## obtain total background counts for statistical testing
+total_class_counts <- df |>
+    dplyr::count(class, name = "total_class")
+total_module_counts <- df |>
+    dplyr::count(membership, name = "total_module")
+total_overall <- nrow(df)
+
+## perform Fisher's exact test for each cell in the matrix
+p_mat <- matrix(NA, nrow = nrow(count_mat), ncol = ncol(count_mat))
+rownames(p_mat) <- rownames(count_mat)
+colnames(p_mat) <- colnames(count_mat)
+
+for (mod in rownames(count_mat)) {
+    for (cls in colnames(count_mat)) {
+        ## Counts
+        ## in module, of class
+        a <- count_mat[mod, cls]
+        ## not in module, of class
+        b <- total_class_counts$total_class[total_class_counts$class == cls] - a  
+        ## in module, not of class
+        c <- total_module_counts$total_module[total_module_counts$membership == mod] - a  
+        # not in module, not of class
+        d <- total_overall - a - b - c  
+    
+        ## construct contingency table
+        contingency <- matrix(c(a, b, c, d), nrow = 2, byrow = FALSE)
+    
+        ## run one-tailed Fisher's Exact Test and write p-value to p_mat
+        p_mat[mod, cls] <- fisher.test(contingency, alternative = "greater")$p.value
+    }
+}
+
+## adjust p-values (e.g., using the Benjamini-Hochberg method)
+p_adj <- p.adjust(p_mat, method = "BH")
+p_adj_mat <- matrix(p_adj, nrow = nrow(p_mat), ncol = ncol(p_mat),
+    dimnames = dimnames(p_mat))
+
+## annotate significant cells
+sig_labels <- ifelse(p_adj_mat < 0.05, "*", "")
+
+## plot a heatmap and indicate significance
+row_annot <- rowAnnotation(
+    Cluster = factor(rownames(count_mat), levels = levels(membership_factor)),
+    col = list(Cluster = membership_colors),
+    show_annotation_name = FALSE,
+    annotation_legend_param = list(title = "module")
+)
+
+png("figure/figure5_network_heatmap.png")
+Heatmap(count_mat,
+    name = "# metabolites",
+    left_annotation = row_annot,
+    show_row_names = FALSE,
+    col = colorRamp2(c(0, max(count_mat)), c("white", "black")),
+    cell_fun = function(j, i, x, y, width, height, fill) {
+        grid.text(sig_labels[i, j], x, y - unit(0.01, "npc"), 
+            gp = gpar(fontsize = 18, col = "cyan4"))
+    },
+    cluster_rows = TRUE,
+    cluster_columns = TRUE)
 dev.off()
 ```
 
@@ -1696,21 +1849,23 @@ dev.off()
 gg_hist_coef <- image_read("figure/figure5_histogram_coef.png")
 gg_hist_pvalues <- image_read("figure/figure5_histogram_pvalues.png")
 gg_network_factor1 <- image_read("figure/figure5_network_factor1.png")
-gg_network_infomap <- image_read("figure/figure5_network_infomap.png")
+gg_network_module <- image_read("figure/figure5_network_module.png")
+gg_network_heatmap <- image_read("figure/figure5_network_heatmap.png")
 
 ## convert images to ggplot objects
 gg_hist_coef <- ggdraw() + draw_image(gg_hist_coef)
 gg_hist_pvalues <- ggdraw() + draw_image(gg_hist_pvalues)
 gg_network_factor1 <- ggdraw() + draw_image(gg_network_factor1)
-gg_network_infomap <- ggdraw() + draw_image(gg_network_infomap)
+gg_network_module <- ggdraw() + draw_image(gg_network_module)
+gg_network_heatmap <- ggdraw() + draw_image(gg_network_heatmap)
 
-g <- plot_grid(gg_hist_coef, gg_hist_pvalues, 
-        gg_network_factor1, gg_network_infomap, 
-    ncol = 2, rel_widths = c(1, 1), labels = "AUTO",
-    label_size = 12)
+row1 <- plot_grid(gg_hist_coef, gg_hist_pvalues, gg_network_factor1, ncol = 3,
+    labels = c("A", "B", "C"), label_size = 8)
+row2 <- plot_grid(gg_network_module, gg_network_heatmap, ncol = 2,
+    labels = c("D", "E"), label_size = 8, rel_widths = c(0.4, 0.6))
+g <- plot_grid(row1, row2, ncol = 1, rel_heights = c(0.51, 0.49))
 ggsave(filename = "figure/figure5.jpg", plot = g, device = "jpg", dpi = 600)
 ```
-
 
 # Conclusion
 
@@ -1750,7 +1905,9 @@ A: Histogram of coefficients of Pearson correlation-based network.
 B: Histogram of corresponding adjusted p-values of Pearson correlation-based network using the Benjamini-Hochberg method).
 C: Thresholded network based on Pearson and Spearman correlation. Each node represents a metabolite and is colored according to its MOFA Factor 1 loading. Edges were retained if the
  absolute correlation coefficient was > 0.8 (Pearson) and > 0.7 (Spearman), with corresponding adjusted p-values < 0.05 using the Benjamini-Hochberg method.
-D: Thresholded network based on Pearson and Spearman correlation. Nodes represent metabolites and are colored according by community membership based on the Infomap community detection algorithm. 
+D: Thresholded network based on Pearson and Spearman correlation. Nodes represent metabolites and are colored according by community membership based on the label propagation community detection algorithm. For a legend of module membership refer 
+to panel E.
+E:  Heatmap of chemical class distribution across network modules based on label propagation algorithm. The heatmap shows the abundance of chemical classes (columns) within each module (rows), with color intensity reflecting class count. Asterisks (*) indicate statistically significant overrepresentation of a chemical class within a module (Fisher’s exact test, FDR-adjusted p < 0.05).
 
 ```{r table_metabolites_chebi_hmdb}
 #| eval: true
