@@ -15,10 +15,9 @@ editor_options:
   chunk_output_type: console
 ---
 
-<!-- COMMENT: revise abstract -->
 
-Metabolomics, the study of small molecules in biological systems, and proteomics, the study of proteins in biological systems, have become powerful tools for understanding biochemical pathways, discovering biomarkers, and elucidating disease mechanisms. This chapter provides a guide to performing metabolomics and proteomics data analysis in *R*,  focusing on pathway and network-based approaches. It covers essential steps in data processing, quality control (QC), differential expression analysis, multi-omics factor analysis (MOFA), statistical network analysis, and pathway analysis using prior knowledge. The methods outlined provide a framework for biomarker discovery and advancing systems-level understanding of disease processes using metabolomics and proteomics datasets.
-
+Metabolomics, the study of small molecules in biological systems, is a powerful tool for understanding biochemical pathways, discovering biomarkers, and elucidating disease mechanisms. This chapter provides a guide to performing metabolomics data analysis in *R*,  focusing on enrichment analysis and network-based approaches. It covers essential steps in data processing, quality control (QC), differential expression analysis, integration with proteomics using multi-omics factor analysis (MOFA) and statistical network analysis, as well as enrichment analysis using prior knowledge. The methods outlined provide a framework for biomarker discovery and advancing systems-level understanding of disease processes using metabolomics data in combination with prior knowledge and proteomics data.
+ 
 keywords: Metabolomics, Proteomics, Processing, Quality control, Network analysis, Pathway, Knowledge graphs
 
 ```{r load_library}
@@ -1491,7 +1490,6 @@ row2 <- plot_grid(Fig4C, Fig4D, ncol = 2, labels = c( "C", "D"),
     rel_widths = c(1.6, 1.2), label_size = 20)
 g <- plot_grid(row1, row2, ncol = 1, rel_heights = c(1.5, 1))
 
-## COMMENT: panel C missing?
 ggsave(filename = "figure/figure4.jpg", 
     plot = g, 
     device = "jpg", 
