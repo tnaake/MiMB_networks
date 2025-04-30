@@ -1746,7 +1746,7 @@ plot(g_keep, vertex.label = NA, vertex.size = 3, layout = layout_g_keep)
 dev.off()
 ```
 
-7. (optional) Depending on the biological question combine network structure with prior knowledge. For example, analyse the module composition via PK resources to check for metabolite classes. Use one-tailed Fisher's Exact test to check for overrepresentation of a given class.
+7. (optional) Depending on the biological question combine network structure with prior knowledge (Figure 5 E). For example, analyse the module composition via PK resources to check for metabolite classes. Use one-tailed Fisher's Exact test to check for overrepresentation of a given class.
 
 ```{r network_pk}
 #| eval: true
