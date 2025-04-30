@@ -1088,7 +1088,6 @@ row3 <- plot_grid(Fig3F, Fig3G, Fig3H, NULL, ncol = 4,
     label_size = 20)
 g <- plot_grid(row1, row2, row3, ncol = 1, rel_heights = c(0.7, 1, 1))
 
-## COMMENT: still not the "old" abundance ranges, volcano plot seems off
 ggsave(filename = "figure/figure3.jpg", 
     plot = g, 
     device = "jpg", 
@@ -1349,7 +1348,8 @@ The biological interpretation of the results is crucial and should be done in th
 #| warning: false
 #| results: false
 #| fig.show: hide
-DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |> ## COMMENT: why not assigned to InputData?
+
+InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
     tibble::column_to_rownames("Metabolite") |>
     dplyr::filter(class %in% c("Ceramides", "Triacylglycerols", "Glycosylceramides"))
                     
