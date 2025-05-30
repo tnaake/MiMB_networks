@@ -579,12 +579,14 @@ Tools, such as *MatrixQCvis* [@Naake2022] can be used to explore data quality in
 ## for heteroskedasticity
 
 ## metabolomics
+assay(metabolomics, "raw") <- assay(metabolomics)
 assay(metabolomics) <- assay(metabolomics) |>
     normalizeAssay(method = "quantile division", probs = 0.5,
         multiplyByNormalizationValue = TRUE) |>
     transformAssay(method = "log")
 
 ## proteomics
+assay(proteomics, "raw") <- assay(proteomics)
 assay(proteomics) <- assay(proteomics) |>
     #normalizeAssay(method = "quantile division", probs = 0.5, 
     #    multiplyByNormalizationValue = TRUE) |>
@@ -942,7 +944,7 @@ To systematically define which statistical tests to consider one can follow thes
 #| warning: false
 #| results: false
 
-InputData <- assay(metabolomics) |>
+InputData <- assay(metabolomics, "raw") |>
     t() |> 
     as.data.frame() |>
     mutate(across(everything(), ~ replace_na(.x, 0)))
@@ -971,7 +973,7 @@ DMA_Res <- DMA(
 DMA_Res[["ShapiroTest"]][["DF"]] |>
     as.data.frame() |>
     select(1:5) |>
-    kbl(caption = "`Shaprio.test` results.") |>
+    kbl(caption = "`Shapiro.test` results.") |>
     kable_classic(full_width = FALSE, html_font = "Cambria", 
         font_size = 12) 
 
@@ -1031,12 +1033,12 @@ DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
     slice(1:10) |>
     kbl(caption = "DMA results Tumour versus Normal.") |>
     kable_classic(full_width = FALSE, html_font = "Cambria", 
-        font_size = 12) 
+        font_size = 12)
 
 ## Volcano plots
 ## 1. t.test
 InputData <- DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
-  column_to_rownames("Metabolite")
+    column_to_rownames("Metabolite")
 
 Res <- VizVolcano(
     InputData = InputData,
