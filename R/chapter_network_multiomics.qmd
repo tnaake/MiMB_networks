@@ -950,17 +950,17 @@ InputData <- assay(metabolomics, "raw") |>
     mutate(across(everything(), ~ replace_na(.x, 0)))
 
 ## differential metabolite analysis
-DMA_Res <- DMA(
-    InputData = InputData,
-    SettingsFile_Sample = as.data.frame(colData(metabolomics)),
-    SettingsInfo = c(Conditions ="tissue", Numerator = "TU" , Denominator = "NAT"),
-    SettingsFile_Metab = as.data.frame(rowData(metabolomics)),
-    StatPval = "t.test",
-    StatPadj = "fdr",
-    PerformShapiro = TRUE,
-    PerformBartlett = TRUE,
-    SaveAs_Plot = NULL,
-    SaveAs_Table = NULL)
+DMA_Res <- dma(
+    data = InputData,
+    metadata_sample = as.data.frame(colData(metabolomics)),
+    metadata_info = c(Conditions ="tissue", Numerator = "TU" , Denominator = "NAT"),
+    metadata_feature = as.data.frame(rowData(metabolomics)),
+    pval = "t.test",
+    padj = "fdr",
+    shapiro = TRUE,
+    bartlett = TRUE,
+    save_plot = NULL,
+    save_table = NULL)
 ```
 
 ```{r dma_visualization}
@@ -1000,17 +1000,17 @@ Fig3B <- DMA_Res[["ShapiroTest"]][["Plot"]][["Distributions"]][["TU"]] +
 ##     mutate(across(everything(), ~ replace_na(.x, 0)))
 
 # Differential metabolite analysis
-DMA_Res_wilcox <- DMA(
-    InputData = InputData,
-    SettingsFile_Sample= as.data.frame(colData(metabolomics)),
-    SettingsInfo = c(Conditions = "tissue", Numerator = "TU" , Denominator = "NAT"),
-    SettingsFile_Metab = as.data.frame(rowData(metabolomics)),
-    StatPval = "wilcox.test",
-    StatPadj = "fdr",
-    PerformShapiro = TRUE,
-    PerformBartlett = TRUE,
-    SaveAs_Plot = NULL,
-    SaveAs_Table = NULL)
+DMA_Res_wilcox <- dma(
+    data = InputData,
+    metadata_sample= as.data.frame(colData(metabolomics)),
+    metadata_info = c(Conditions = "tissue", Numerator = "TU" , Denominator = "NAT"),
+    metadata_feature = as.data.frame(rowData(metabolomics)),
+    pval = "wilcox.test",
+    padj = "fdr",
+    shapiro = TRUE,
+    bartlett = TRUE,
+    save_plot = NULL,
+    save_table = NULL)
 ```
 
 ### Visualization of differential analysis results
@@ -1026,9 +1026,9 @@ DMA_Res_wilcox <- DMA(
 #| fig.show: hide
 
 # data table inspection
-DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
+DMA_Res[["dma"]][["TU _vs_ NAT"]] |>
     as.data.frame() |>
-    select(1, 23:28) |>
+    select(1:2, 23:28) |>
     arrange(p.adj) |>
     slice(1:10) |>
     kbl(caption = "DMA results Tumour versus Normal.") |>
@@ -1037,28 +1037,28 @@ DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
 
 ## Volcano plots
 ## 1. t.test
-InputData <- DMA_Res[["DMA"]][["TU _vs_ NAT"]] |>
+InputData <- DMA_Res[["dma"]][["TU _vs_ NAT"]] |>
     column_to_rownames("Metabolite")
 
-Res <- VizVolcano(
-    InputData = InputData,
-    SelectLab = NULL,
+Res <- viz_volcano(
+    data = InputData,
+    select_label = NULL,
     ylab = "-log10(p.adj)",
-    yCutoff = 0.1,
-    PlotName = "t-test & FDR adjustment")
+    cutoff_y = 0.1,
+    plot_name = "t-test & FDR adjustment")
 
 Fig3C <- Res[["Plot_Sized"]][["Plot_Sized"]]
 
 
-InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
+InputData <- DMA_Res_wilcox[["dma"]][["TU _vs_ NAT"]] |>
     column_to_rownames("Metabolite")
 
-Res <- VizVolcano(
-    InputData = InputData,
-    SelectLab = NULL,
+Res <- viz_volcano(
+    data = InputData,
+    select_label = NULL,
     ylab = "-log10(p.adj)",
-    yCutoff = 0.1,
-    PlotName = "Wilcoxon test & FDR adjustment")
+    cutoff_y = 0.1,
+    plot_name = "Wilcoxon test & FDR adjustment")
 
 Fig3D <- Res[["Plot_Sized"]][["Plot_Sized"]]
 ```
@@ -1072,20 +1072,20 @@ Fig3D <- Res[["Plot_Sized"]][["Plot_Sized"]]
 #| results: false
 #| fig.show: "hide"
 
-InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
+InputData <- DMA_Res_wilcox[["dma"]][["TU _vs_ NAT"]] |>
     column_to_rownames("Metabolite")
 
-SettingsFile_Metab <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
+SettingsFile_Metab <- DMA_Res_wilcox[["dma"]][["TU _vs_ NAT"]] |>
     column_to_rownames("Metabolite") |>
     select(24:28)
 
-Res <- VizVolcano(
-    InputData = InputData,
-    SettingsInfo = c(color = "class"),
-    SettingsFile_Metab = SettingsFile_Metab,
+Res <- viz_volcano(
+    data = InputData,
+    metadata_info = c(color = "class"),
+    metadata_feature = SettingsFile_Metab,
     ylab = "-log10(p.adj)",
-    yCutoff = 0.1,
-    PlotName = "Wilcoxon test & FDR adjustment")
+    cutoff_y = 0.1,
+    plot_name = "Wilcoxon test & FDR adjustment")
 
 Fig3E <- Res[["Plot_Sized"]][["Plot_Sized"]]
 ```
@@ -1099,22 +1099,22 @@ Fig3E <- Res[["Plot_Sized"]][["Plot_Sized"]]
 #| results: false
 #| fig.show: hide
 
-InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
+InputData <- DMA_Res_wilcox[["dma"]][["TU _vs_ NAT"]] |>
     column_to_rownames("Metabolite") |>
     filter(class %in% c("Ceramides", "Triacylglycerols", "Sphingolipids"))
                     
-SettingsFile_Metab <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
+SettingsFile_Metab <- DMA_Res_wilcox[["dma"]][["TU _vs_ NAT"]] |>
     column_to_rownames("Metabolite") |>
     select(24:28)
 
-Res <- VizVolcano(
-    InputData = InputData,
-    SettingsInfo = c(individual = "class"),
-    SettingsFile_Metab = SettingsFile_Metab,
-    SelectLab = NULL,
+Res <- viz_volcano(
+    data = InputData,
+    metadata_info = c(individual = "class"),
+    metadata_feature = SettingsFile_Metab,
+    select_label = NULL,
     ylab ="-log10(p.adj)",
-    yCutoff = 0.1,
-    PlotName = "Wilcoxon & FDR")
+    cutoff_y = 0.1,
+    plot_name = "Wilcoxon & FDR")
 
 Fig3F <- Res[["Plot_Sized"]][["Ceramides"]]
 Fig3G <- Res[["Plot_Sized"]][["Sphingolipids"]]
@@ -1246,7 +1246,7 @@ PK, which can be divided in several steps:
 #| warning: false
 
 ## load Biocrates IDs:
-FeatureMetadata_Biocrates <- ToyData(Data="BiocratesFeatureTable")
+FeatureMetadata_Biocrates <- biocrates_features
 
 ## add IDs to our measured data
 SettingsFile_Metab <-  merge(
@@ -1274,25 +1274,15 @@ SettingsFile_Metab <-  merge(
 #| message: false
 #| warning: false
 
-## plot Upset plot: (will be updated in MetaProViz soon, as we are adding it to export)
-Plotdf <- data.frame(
-        trivname = SettingsFile_Metab$feature_original,
-        CHEBI = as.integer(!is.na(SettingsFile_Metab$CHEBI)),
-        HMDB  = as.integer(!is.na(SettingsFile_Metab$HMDB)),
-        LIMID = as.integer(!is.na(SettingsFile_Metab$LIMID))
-    ) |>
-    mutate(
-        None = as.integer(rowSums(across(c(CHEBI, HMDB, LIMID))) == 0),
-        Class = as.factor(SettingsFile_Metab$Class)  
-    )
+## plot Upset plot:
+RES <- compare_pk(
+    data =  list(Biocft = SettingsFile_Metab),
+    metadata_info = list(Biocft = c("CHEBI", "HMDB", "LIMID")), 
+    plot_name  = "Biocrates IDs available for the detected metabolites.",
+    save_plot = NULL,
+    save_table = NULL)
 
-Fig4A <- MetaProViz:::GenerateUpset(
-    df = Plotdf,
-    class_col = "Class",
-    intersect_cols = c("LIMID", "HMDB", "CHEBI", "None"),
-    plot_title = "Biocrates IDs available for the detected metabolites.",
-    palette_type = "polychrome",
-    output_file = NULL)
+Fig4A <- RES[["upset_plot"]]
 ```
 
 4. Given the incomplete coverage in mass spectrometry-based metabolomics and hence the potential low coverage of the PK, adjust the choice of statistical tests. For metabolomics, methods such as ORA should generally perform well since the method offers the ability to restrict the background to the detected metabolites (assay-specific background) [@Wieder2021].
@@ -1367,16 +1357,18 @@ Fig4A <- MetaProViz:::GenerateUpset(
 
 #We can load prior knowledge directly from MetaProViz:
 #1. metabolite-sets
-KEGG <- LoadKEGG()
+KEGG <- metsigdb_kegg()
 
-ChemicalClass <- LoadRAMP()
+ChemicalClass <- metsigdb_chemicalclass()
 
 #2. gene-metabolite sets
-Gaude_Pathways <- LoadGaude()
-Gaude_GeneMetab <- Make_GeneMetabSet(Input_GeneSet = Gaude_Pathways,
-    SettingsInfo = c(Target = "gene"),
-    PKName = "Gaude")
-MetaLinksDB_Res <- LoadMetalinks()
+Gaude_Pathways <- gaude_pathways
+
+Gaude_GeneMetab <- make_gene_metab_set(input_pk = Gaude_Pathways,
+    metadata_info = c(Target = "gene"),
+    pk_name = "Gaude")
+
+MetaLinksDB_Res <- metsigdb_metalinks()
 ```
 
 ### Biological interpretation of the results
@@ -1399,7 +1391,7 @@ The biological interpretation of the results is crucial and should be done in th
 #| results: false
 #| fig.show: hide
 
-InputData <- DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]] |>
+InputData <- DMA_Res_wilcox[["dma"]][["TU _vs_ NAT"]] |>
     column_to_rownames("Metabolite") |>
     filter(class %in% c("Ceramides", "Triacylglycerols", "Glycosylceramides"))
                     
@@ -1428,13 +1420,13 @@ SettingsFile_Metab <- merge(
     column_to_rownames("feature")
 
 ## plot 
-Res <- VizVolcano(
-    InputData = InputData,
-    SettingsInfo = c(individual = "Class", color = "combined_label"),
-    SettingsFile_Metab = SettingsFile_Metab,
+Res <- viz_volcano(
+    data = InputData,
+    metadata_info = c(individual = "Class", color = "combined_label"),
+    metadata_feature = SettingsFile_Metab,
     ylab = "-log10(p.adj)",
-    yCutoff = 0.1,
-    PlotName = "Wilcoxon & FDR")
+    cutoff_y = 0.1,
+    plot_name = "Wilcoxon & FDR")
 
 Fig4B <- Res[["Plot_Sized"]][["Ceramides"]]
 Fig4C <- Res[["Plot_Sized"]][["Glycosylceramides"]]
@@ -1454,7 +1446,7 @@ Fig4D <- Res[["Plot_Sized"]][["Triacylglycerols"]]
 #| results: false
 ## combine the differential results with the metabolite IDs:
 InputData <- merge(
-    x = DMA_Res_wilcox[["DMA"]][["TU _vs_ NAT"]],
+    x = DMA_Res_wilcox[["dma"]][["TU _vs_ NAT"]],
     y = SettingsFile_Metab,
     by.x = "feature_original", 
     by.y = "feature_original",## COMMENT: I needed to adapt this, since the column was not present???
