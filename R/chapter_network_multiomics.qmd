@@ -1861,6 +1861,8 @@ g <- plot_grid(row1, row2, ncol = 1, rel_heights = c(0.51, 0.49))
 ggsave(filename = "figure/figure5.jpg", plot = g, device = "jpg", dpi = 600)
 ```
 
+8. Perform analysis of network structure. 
+
 # Conclusion
 
 This chapter demonstrated how to perform metabolomics data analysis in *R* using prior knowledge in combination with enrichment analysis or network-based approaches. By integrating tools for preprocessing, differential analysis, enrichment and correlation analysis, and data integration, *R* provides a comprehensive framework for deriving biological insights from metabolomics datasets and combine them with other omics such as proteomics. Parameters such as thresholds, normalization methods, and correction techniques must be carefully chosen to ensure the robustness and reliability of the results. 
