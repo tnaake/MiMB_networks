@@ -6,7 +6,7 @@ author:
       - Institute for Computational Biomedicine and Heidelberg University Hospital, Faculty of Medicine, Heidelberg University, Im Neuenheimer Feld 130, 69120 Heidelberg, Germany
   - name: Thomas Naake
     affiliations:
-      - European Molecular Biology Laboratory, Meyerhofstrasse 1, 69117 Heidelberg, Germany
+      - European Molecular Biology Laboratory, Meyerhofstrasse 1, 69117 Heidelberg, Germany; European Molecular Biology Laboratory, Notkestrasse 85, 22607 Hamburg, Germany; Physikalisch-Technische Bundesanstalt, Bundesallee 100, 38116 Braunschweig, Germany; Department of Bioinformatics and Biochemistry, Faculty of Life Sciences, Technische Universität Braunschweig, Rebenring 56, 38106 Braunschweig Germany
       
 editor_options: 
 chunk_output_type: console
@@ -1890,7 +1890,7 @@ In order to interpret a metabolomics experiment in its entirety, it is important
 #| echo: false
 #| message: false
 #| warning: false
-#| results: true
+#| results: asis
 ## create the table
 df <- tribble(
     ~`Trivial Name`, ~Class, ~ChEBI, ~HMDB,
@@ -1915,7 +1915,7 @@ kbl(df, format = "pandoc",
 #| echo: false
 #| message: false
 #| warning: false
-#| results: true
+#| results: asis
  
 ## create the table
 df <- tribble(
