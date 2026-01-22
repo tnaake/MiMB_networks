@@ -110,7 +110,7 @@ library("MatrixQCvis")
 
 ## MatrixQCvisUtils
 if (!require("MatrixQCvisUtils", quietly = TRUE))
-    BiocManager::install("MatrixQCvisUtils")
+    BiocManager::install("tnaake/MatrixQCvisUtils")
 library("MatrixQCvisUtils")
 
 ## MetaProViz
@@ -1248,6 +1248,7 @@ PK, which can be divided in several steps:
 #| warning: false
 
 ## load Biocrates IDs:
+data(biocrates_features, package = "MetaProViz")
 FeatureMetadata_Biocrates <- biocrates_features
 
 ## add IDs to our measured data
@@ -1357,13 +1358,13 @@ Fig4A <- RES[["upset_plot"]]
 #| message: false
 #| warning: false
 
-#We can load prior knowledge directly from MetaProViz:
-#1. metabolite-sets
+## We can load prior knowledge directly from MetaProViz:
+## 1. metabolite-sets
 KEGG <- metsigdb_kegg()
 
 ChemicalClass <- metsigdb_chemicalclass()
 
-#2. gene-metabolite sets
+## 2. gene-metabolite sets
 Gaude_Pathways <- gaude_pathways
 
 Gaude_GeneMetab <- make_gene_metab_set(input_pk = Gaude_Pathways,
@@ -1451,7 +1452,7 @@ InputData <- merge(
     x = DMA_Res_wilcox[["dma"]][["TU _vs_ NAT"]],
     y = SettingsFile_Metab,
     by.x = "feature_original", 
-    by.y = "feature_original",## COMMENT: I needed to adapt this, since the column was not present???
+    by.y = "feature_original",
     all.x = TRUE)
 
 ## expand the metabolite IDs:
@@ -1459,7 +1460,7 @@ DetectedIDs <- InputData |>
     select("Metabolite", "HMDB")|>
     drop_na()|>
     mutate(row_id = row_number())|>
-    mutate("OriginalEntry_InputData":= !!sym("HMDB")) |> # Store original values
+    mutate("OriginalEntry_InputData":= !!sym("HMDB")) |> ## Store original values
     separate_rows("HMDB", sep = ",\\s*") |>
     group_by(row_id) |>
     mutate("OriginalEntry_InputData" := paste0("InputData_", cur_group_id())) |>
@@ -1632,6 +1633,7 @@ undirected *or* directed.
 #| message: false
 #| warning: false
 #| results: false
+diag(assay(stat_adj_thr, "consensus")) <- 0
 g <- graph_from_adjacency_matrix(assay(stat_adj_thr, "consensus"), 
     weighted = FALSE, mode = "undirected")
 ```
