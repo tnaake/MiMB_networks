@@ -3,13 +3,13 @@ title: "Multi-omics guided pathway and network analysis of clinical metabolomics
 author:
   - name: "Christina Schmidt"
     affiliation:
-      - Heidelberg University, Faculty of Medicine, and Heidelberg University Hospital, Institute for Computational Biomedicine, Heidelberg, Germany
+      - Heidelberg University, Faculty of Medicine, and Heidelberg University Hospital, Institute for Computational Biomedicine, 69120 Heidelberg, Germany
   - name: "Thomas Naake"
     affiliation:
-      - name: European Molecular Biology Laboratory, Meyerhofstrasse 1, 69117 Heidelberg, Germany
-      - name: European Molecular Biology Laboratory, Notkestrasse 85, 22607 Hamburg, Germany
-      - name: Physikalisch-Technische Bundesanstalt, Bundesallee 100, 38116 Braunschweig, Germany
-      - name: Department of Bioinformatics and Biochemistry, Faculty of Life Sciences, Technische Universität Braunschweig, Rebenring 56, 38106 Braunschweig Germany
+      - European Molecular Biology Laboratory, Meyerhofstrasse 1, 69117 Heidelberg, Germany
+      - European Molecular Biology Laboratory, Notkestrasse 85, 22607 Hamburg, Germany
+      - Physikalisch-Technische Bundesanstalt, Bundesallee 100, 38116 Braunschweig, Germany
+      - Department of Bioinformatics and Biochemistry, Faculty of Life Sciences, Technische Universität Braunschweig, Rebenring 56, 38106 Braunschweig Germany
 bibliography: bibliography.bib
 prefer-html: true
 format: docx
@@ -933,11 +933,11 @@ To systematically define which statistical tests to consider one can follow thes
 
 1. To define which comparison(s) should be performed, it is important to understand the meta information in the data and define the biological question. For ***one_vs_one (single comparison)*** analysis, where a single condition is compared against another (e.g. numerator = "Condition1" and denominator = "Condition2"), statistical tests such as the Student’s t-test [@Padhee_2024], Wilcoxon rank-sum test [@Wilcoxon_1945], or linear regression modeling [@Ritchie_2015] can be used. For ***all_vs_one (multiple comparison against a reference)***, where multiple conditions are compared individually against a single reference condition (e.g., numerator = ["Condition2", "Condition3", ..., "ConditionN"], denominator = "Condition1") or ***all_vs_all (multiple comparison)*** , where all conditions are compared against each other (e.g., numerator = ["Condition1", "Condition2", ..., "ConditionN"], denominator = ["Condition1", "Condition2", ..., "ConditionN"]), multiple testing has to be performed for which statistical tests such as ANOVA (analysis of variance), Welch’s ANOVA [@Welch_1951], Kruskal-Wallis test [@Padhee_2024], or linear modeling (e.g., using limma’s linear model fitting [@Ritchie_2015]) are appropriate.
 
-2. Check the assumption of normality to understand if the data follow a normal- or not-normal distribution by for example performing a Shapiro test [@Padhee_2024]. For normally distributed data, t-tests or ANOVA can be used, whilst for not-normally distributed data, non-parametric tests like Wilcoxon rank-sum test or Kruskal-Wallis test are appropriate [@Padhee_2024]. The R package [MetaProViz](https://saezlab.github.io/MetaProViz/index.html) can be used to perform the Shapiro test for normality. and the Bartlett's test for homoscedasticity
+2. Check the assumption of normality to understand if the data follow a normal- or not-normal distribution by for example performing a Shapiro test [@Padhee_2024]. For normally distributed data, t-tests or ANOVA can be used, whilst for not-normally distributed data, non-parametric tests like Wilcoxon rank-sum test or Kruskal-Wallis test are appropriate [@Padhee_2024]. The R package *MetaProViz* can be used to perform the Shapiro test for normality. and the Bartlett's test for homoscedasticity
 
-3. Check if the data are homoscedastic, meaning whether they have equal variance, using Levene's test or Bartlett's test [@Viwatwongkasem_2004]. If the data are not homoscedastic, consider using test like Wilcoxon rank-sum test since tests like Kruskal-Wallis assumes equal variance [@Padhee_2024]. MetaProViz can be used to perform the Bartlett's test for homoscedasticity.
+3. Check if the data are homoscedastic, meaning whether they have equal variance, using Levene's test or Bartlett's test [@Viwatwongkasem_2004]. If the data are not homoscedastic, consider using test like Wilcoxon rank-sum test since tests like Kruskal-Wallis assumes equal variance [@Padhee_2024]. *MetaProViz* can be used to perform the Bartlett's test for homoscedasticity.
 
-4. Perform differential expression analysis. If there are missing values (*NA*s) in the data linear modeling can be used, such as limma, which fits a linear model to the data and can handle missing values [@Ritchie_2015]. Yet, the limma method assumes that the residuals of the linear model are approximately normally distributed [@Ritchie_2015]. Other options are to either perform missing value imputation, which comes with its own pitfalls in metabolomics, or to assume that the missing values are true zeros, which in turn can lead to zero inflation [@Huang_2022]. MetaProViz can be used to perform differential analysis. It gives the choice between different statistical tests. Importantly, MetaProViz also adjusts for multiple testing using the Benjamini Hochberg, False Discovery Rate (FDR), Bonferroni or Holm method [@Schmidt2025].
+4. Perform differential expression analysis. If there are missing values (*NA*s) in the data linear modeling can be used, such as limma, which fits a linear model to the data and can handle missing values [@Ritchie_2015]. Yet, the limma method assumes that the residuals of the linear model are approximately normally distributed [@Ritchie_2015]. Other options are to either perform missing value imputation, which comes with its own pitfalls in metabolomics, or to assume that the missing values are true zeros, which in turn can lead to zero inflation [@Huang_2022]. *MetaProViz* can be used to perform differential analysis. It gives the choice between different statistical tests. Importantly, *MetaProViz* also adjusts for multiple testing using the Benjamini Hochberg, False Discovery Rate (FDR), Bonferroni or Holm method [@Schmidt2025].
 
 ```{r dma}
 #| eval: true
@@ -1194,7 +1194,7 @@ Prior Knowledge (PK) is a powerful tool in omics data analysis, allowing researc
    on other available analysis, such as MOFA or PCA, the ranking of features can also
    be done using those outputs. Similarly, using the MOFA results created above, one
    can also define the top and bottom 20% of altered features, which in turn can
-   be used to perfrom ORA.
+   be used to perform ORA.
 
 Yet, it is relevant to decide if performing enrichment analysis will be 
 able to answer the biological question at hand. Metabolites are not genes, 
