@@ -657,7 +657,7 @@ MOFAobject <- prepare_mofa(
 
 ## initialize MOFA model
 MOFAobject <- run_mofa(MOFAobject, 
-    use_basilisk = FALSE)
+    use_basilisk = TRUE)
 ```
 
 4.  Inspect the sanity of the model output. Plot data overview and verify that the dimensions for each dataset are as expected. Calculate the correlation scores between the factors. The correlation coefficients between the factors should be low, indicating that each factor captures distinct variation in the data. If factors are found to be highly correlated, it may suggest that the model is not effectively separating the variation across the datasets. In such cases, consider reducing the number of trained factors. This will not only help in improving the interpretability of the model but also enhance the biological relevance of the factors by focusing on more distinct sources of variation.
@@ -1365,6 +1365,7 @@ KEGG <- metsigdb_kegg()
 ChemicalClass <- metsigdb_chemicalclass()
 
 ## 2. gene-metabolite sets
+data(gaude_pathways, package = "MetaProViz")
 Gaude_Pathways <- gaude_pathways
 
 Gaude_GeneMetab <- make_gene_metab_set(input_pk = Gaude_Pathways,
@@ -1914,7 +1915,7 @@ E:  Heatmap of chemical class distribution across network modules based on label
 #| echo: false
 #| message: false
 #| warning: false
-#| results: true
+#| results: asis
 ## create the table
 df <- tribble(
     ~`Trivial Name`, ~Class, ~ChEBI, ~HMDB,
@@ -1939,7 +1940,7 @@ kbl(df, format = "pandoc",
 #| echo: false
 #| message: false
 #| warning: false
-#| results: true
+#| results: asis
  
 ## create the table
 df <- tribble(
